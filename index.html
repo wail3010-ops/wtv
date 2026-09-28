@@ -397,7 +397,7 @@
             </div>
 
             <div id="qr-box" class="qr-card">
-                <img id="qr-code-img" src="" alt="QR Code" style="width: 150px; height: 150px; display: block; margin: 0 auto; background:#fff;">
+                <img id="qr-code-img" src="" alt="QR Code" style="width: 140px; height: 140px; display: block; margin: 0 auto; background:#fff;">
             </div>
             <p id="qr-hint" style="font-size: 11px; color: var(--gold); margin-bottom: 10px;">📱 امسح الباركود بكاميرا جوالك للتفعيل والتجديد الفوري دون كتابة بالريموت</p>
 
@@ -578,6 +578,30 @@
             if (settingsQr) settingsQr.src = qrApiUrl;
         }
 
+        /** جلب ذكي من السيرفر مع التفاف تلقائي حول حظر الـ CORS والـ HTTPS للمتصفحات */
+        async function fetchXtreamApi(url) {
+            try {
+                const res = await fetch(url);
+                if (res.ok) return await res.json();
+            } catch (e) {
+                console.log("Direct fetch blocked by browser CORS/HTTPS, retrying via CORS proxy...", e);
+            }
+
+            const proxies = [
+                `https://corsproxy.io/?${encodeURIComponent(url)}`,
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
+            ];
+
+            for (const proxyUrl of proxies) {
+                try {
+                    const res = await fetch(proxyUrl);
+                    if (res.ok) return await res.json();
+                } catch (e) { }
+            }
+
+            throw new Error("CORS or Network Block");
+        }
+
         function startTvSyncListener() {
             const urlParams = new URLSearchParams(window.location.search);
             const isMobilePairPage = urlParams.has('id');
@@ -595,9 +619,7 @@
             const mac = getDeviceMac();
             if (syncInterval) clearInterval(syncInterval);
 
-            // استماع الشاشة اللحظي المزدوج والمباشر أونلاين عبر سيرفرين متوازيين 100%
             syncInterval = setInterval(async () => {
-                // 1. الفحص عبر JSONStorage
                 try {
                     const res = await fetch(`https://api.jsonstorage.net/v1/json/wtv_${mac}`);
                     if (res.ok) {
@@ -609,7 +631,6 @@
                     }
                 } catch (e) { }
 
-                // 2. الفحص عبر Restful API
                 try {
                     const res = await fetch(`https://api.restful-api.dev/objects?name=wtv_pair_${mac}`);
                     if (res.ok) {
@@ -782,46 +803,55 @@
                 document.getElementById("section-title").innerText = "البث المباشر والقنوات";
                 drawer.classList.remove("hidden");
                 try {
-                    const [catRes, streamRes] = await Promise.all([
-                        fetch(`${host}/player_api.php?username=${user}&password=${pass}&action=get_live_categories`),
-                        fetch(`${host}/player_api.php?username=${user}&password=${pass}&action=get_live_streams`)
+                    const catUrl = `${host}/player_api.php?username=${user}&password=${pass}&action=get_live_categories`;
+                    const streamUrl = `${host}/player_api.php?username=${user}&password=${pass}&action=get_live_streams`;
+
+                    const [cats, streams] = await Promise.all([
+                        fetchXtreamApi(catUrl),
+                        fetchXtreamApi(streamUrl)
                     ]);
-                    currentCategories = await catRes.json();
-                    currentItems = await streamRes.json();
+                    currentCategories = cats || [];
+                    currentItems = streams || [];
                     renderCategoriesBar(currentCategories, 'live');
                     filterAndRender('live', host, user, pass);
                 } catch (e) {
-                    grid.innerHTML = "<div class='error-msg'>تعذّر تحميل القنوات المباشرة</div>";
+                    grid.innerHTML = "<div class='error-msg'>تعذّر تحميل القنوات المباشرة. تحقق من إعدادات السيرفر</div>";
                 }
             } else if (tab === 'movies') {
                 document.getElementById("section-title").innerText = "مكتبة الأفلام الشاملة";
                 drawer.classList.add("hidden");
                 try {
-                    const [catRes, streamRes] = await Promise.all([
-                        fetch(`${host}/player_api.php?username=${user}&password=${pass}&action=get_vod_categories`),
-                        fetch(`${host}/player_api.php?username=${user}&password=${pass}&action=get_vod_streams`)
+                    const catUrl = `${host}/player_api.php?username=${user}&password=${pass}&action=get_vod_categories`;
+                    const streamUrl = `${host}/player_api.php?username=${user}&password=${pass}&action=get_vod_streams`;
+
+                    const [cats, streams] = await Promise.all([
+                        fetchXtreamApi(catUrl),
+                        fetchXtreamApi(streamUrl)
                     ]);
-                    currentCategories = await catRes.json();
-                    currentItems = await streamRes.json();
+                    currentCategories = cats || [];
+                    currentItems = streams || [];
                     renderCategoriesBar(currentCategories, 'movies');
                     filterAndRender('movies', host, user, pass);
                 } catch (e) {
-                    grid.innerHTML = "<div class='error-msg'>تعذّر تحميل قائمة الأفلام</div>";
+                    grid.innerHTML = "<div class='error-msg'>تعذّر تحميل قائمة الأفلام. تحقق من إعدادات السيرفر</div>";
                 }
             } else if (tab === 'series') {
                 document.getElementById("section-title").innerText = "مكتبة المسلسلات والبرامج الشاملة";
                 drawer.classList.add("hidden");
                 try {
-                    const [catRes, streamRes] = await Promise.all([
-                        fetch(`${host}/player_api.php?username=${user}&password=${pass}&action=get_series_categories`),
-                        fetch(`${host}/player_api.php?username=${user}&password=${pass}&action=get_series`)
+                    const catUrl = `${host}/player_api.php?username=${user}&password=${pass}&action=get_series_categories`;
+                    const streamUrl = `${host}/player_api.php?username=${user}&password=${pass}&action=get_series`;
+
+                    const [cats, streams] = await Promise.all([
+                        fetchXtreamApi(catUrl),
+                        fetchXtreamApi(streamUrl)
                     ]);
-                    currentCategories = await catRes.json();
-                    currentItems = await streamRes.json();
+                    currentCategories = cats || [];
+                    currentItems = streams || [];
                     renderCategoriesBar(currentCategories, 'series');
                     filterAndRender('series', host, user, pass);
                 } catch (e) {
-                    grid.innerHTML = "<div class='error-msg'>تعذّر تحميل قائمة المسلسلات</div>";
+                    grid.innerHTML = "<div class='error-msg'>تعذّر تحميل قائمة المسلسلات. تحقق من إعدادات السيرفر</div>";
                 }
             }
         }
@@ -937,9 +967,9 @@
 
         async function fetchSeriesEpisodes(seriesId, seriesName, host, user, pass) {
             try {
-                const res = await fetch(`${host}/player_api.php?username=${user}&password=${pass}&action=get_series_info&series_id=${seriesId}`);
-                const data = await res.json();
-                const episodes = data.episodes;
+                const epUrl = `${host}/player_api.php?username=${user}&password=${pass}&action=get_series_info&series_id=${seriesId}`;
+                const data = await fetchXtreamApi(epUrl);
+                const episodes = data ? data.episodes : null;
                 if (!episodes) {
                     alert("لا توجد حلقات متاحة لهذا المسلسل");
                     return;
@@ -964,9 +994,9 @@
                     html += `<div style="font-weight:bold; color:var(--red); text-align:right; margin-top:10px;">الموسم ${seasonNum}</div>`;
                     episodes[seasonNum].forEach(ep => {
                         const epExt = ep.container_extension || 'mp4';
-                        const epUrl = `${host}/series/${user}/${pass}/${ep.id}.${epExt}`;
+                        const streamEpUrl = `${host}/series/${user}/${pass}/${ep.id}.${epExt}`;
                         html += `
-                            <button class="btn focusable" style="background:#222; text-align:right; padding:10px; font-size:13px;" onclick="closeEpModal(); playStream('${epUrl}')">
+                            <button class="btn focusable" style="background:#222; text-align:right; padding:10px; font-size:13px;" onclick="closeEpModal(); playStream('${streamEpUrl}')">
                                 ▶️ الحلقة ${ep.episode_num} - ${ep.title || 'حلقة ' + ep.episode_num}
                             </button>
                         `;
