@@ -14,6 +14,7 @@
             --gold: #FFC107;
             --text: #FFFFFF;
             --gray: #AAAAAA;
+            --green: #28a745;
         }
 
         * {
@@ -397,7 +398,7 @@
             </div>
 
             <div id="qr-box" class="qr-card">
-                <img id="qr-code-img" src="" alt="QR Code" style="width: 140px; height: 140px; display: block; margin: 0 auto; background:#fff;">
+                <img id="qr-code-img" src="" alt="QR Code" style="width: 150px; height: 150px; display: block; margin: 0 auto; background:#fff;">
             </div>
             <p id="qr-hint" style="font-size: 11px; color: var(--gold); margin-bottom: 10px;">📱 امسح الباركود بكاميرا جوالك للتفعيل والتجديد الفوري دون كتابة بالريموت</p>
 
@@ -548,6 +549,15 @@
         let selectedCategory = null;
         let searchQuery = "";
 
+        function cleanHostUrl(raw) {
+            if (!raw) return "";
+            let h = raw.trim().replace(/\/+$/, "");
+            if (!h.startsWith("http://") && !h.startsWith("https://")) {
+                h = "http://" + h;
+            }
+            return h;
+        }
+
         function getDeviceMac() {
             const urlParams = new URLSearchParams(window.location.search);
             const urlMac = urlParams.get('id');
@@ -578,24 +588,30 @@
             if (settingsQr) settingsQr.src = qrApiUrl;
         }
 
-        /** جلب ذكي من السيرفر مع التفاف تلقائي حول حظر الـ CORS والـ HTTPS للمتصفحات */
         async function fetchXtreamApi(url) {
             try {
                 const res = await fetch(url);
-                if (res.ok) return await res.json();
+                if (res.ok) {
+                    const json = await res.json();
+                    if (json) return json;
+                }
             } catch (e) {
-                console.log("Direct fetch blocked by browser CORS/HTTPS, retrying via CORS proxy...", e);
+                console.log("Direct fetch blocked by browser CORS/HTTPS, retrying via CORS proxies...", e);
             }
 
             const proxies = [
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
                 `https://corsproxy.io/?${encodeURIComponent(url)}`,
-                `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
+                `https://thingproxy.freeboard.io/fetch/${url}`
             ];
 
             for (const proxyUrl of proxies) {
                 try {
                     const res = await fetch(proxyUrl);
-                    if (res.ok) return await res.json();
+                    if (res.ok) {
+                        const json = await res.json();
+                        if (json) return json;
+                    }
                 } catch (e) { }
             }
 
@@ -649,9 +665,9 @@
         }
 
         function applyPairedCredentials(data) {
-            localStorage.setItem("wtv_host", data.host);
-            localStorage.setItem("wtv_user", data.user);
-            localStorage.setItem("wtv_pass", data.pass);
+            localStorage.setItem("wtv_host", cleanHostUrl(data.host));
+            localStorage.setItem("wtv_user", data.user ? data.user.trim() : "");
+            localStorage.setItem("wtv_pass", data.pass ? data.pass.trim() : "");
             localStorage.setItem("wtv_web_activated", "true");
             if (syncInterval) clearInterval(syncInterval);
 
@@ -663,17 +679,22 @@
         async function handleMobilePairing() {
             const urlParams = new URLSearchParams(window.location.search);
             const targetMac = urlParams.get('id');
-            const host = document.getElementById("mobile-host-input").value.trim() || document.getElementById("host-input").value.trim();
-            const user = document.getElementById("mobile-user-input").value.trim() || document.getElementById("user-input").value.trim();
-            const pass = document.getElementById("mobile-pass-input").value.trim() || document.getElementById("pass-input").value.trim();
+            const host = cleanHostUrl(document.getElementById("mobile-host-input").value || document.getElementById("host-input").value);
+            const user = (document.getElementById("mobile-user-input").value || document.getElementById("user-input").value).trim();
+            const pass = (document.getElementById("mobile-pass-input").value || document.getElementById("pass-input").value).trim();
             const code = document.getElementById("activation-code-input").value.trim();
+
+            if (!host || !user || !pass) {
+                alert("الرجاء أدخل رابط الهوست، اسم المستخدم، وكلمة المرور للسيرفر");
+                return;
+            }
 
             if (targetMac) {
                 const payload = {
                     activated: true,
-                    host: host || localStorage.getItem("wtv_host") || "",
-                    user: user || localStorage.getItem("wtv_user") || "",
-                    pass: pass || localStorage.getItem("wtv_pass") || "",
+                    host: host,
+                    user: user,
+                    pass: pass,
                     code: code || "999999",
                     updatedAt: Date.now()
                 };
@@ -741,7 +762,7 @@
                 return;
             }
 
-            const host = document.getElementById("host-input").value.trim();
+            const host = cleanHostUrl(document.getElementById("host-input").value);
             const user = document.getElementById("user-input").value.trim();
             const pass = document.getElementById("pass-input").value.trim();
 
@@ -785,15 +806,15 @@
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             document.getElementById(`tab-${tab}`).classList.add('active');
 
-            const host = localStorage.getItem("wtv_host");
-            const user = localStorage.getItem("wtv_user");
-            const pass = localStorage.getItem("wtv_pass");
+            const host = cleanHostUrl(localStorage.getItem("wtv_host"));
+            const user = (localStorage.getItem("wtv_user") || "").trim();
+            const pass = (localStorage.getItem("wtv_pass") || "").trim();
             if (!host || !user || !pass) return;
 
             const grid = document.getElementById("grid-container");
             const catsBar = document.getElementById("categories-bar");
             const drawer = document.getElementById("live-drawer");
-            grid.innerHTML = "<div style='color:var(--gray); padding:20px;'>جاري تحميل البيانات بالكامل...</div>";
+            grid.innerHTML = "<div style='color:var(--gray); padding:20px;'>جاري تحميل البيانات بالكامل من السيرفر...</div>";
             catsBar.innerHTML = "";
             selectedCategory = null;
             searchQuery = "";
@@ -810,12 +831,12 @@
                         fetchXtreamApi(catUrl),
                         fetchXtreamApi(streamUrl)
                     ]);
-                    currentCategories = cats || [];
-                    currentItems = streams || [];
+                    currentCategories = Array.isArray(cats) ? cats : [];
+                    currentItems = Array.isArray(streams) ? streams : [];
                     renderCategoriesBar(currentCategories, 'live');
                     filterAndRender('live', host, user, pass);
                 } catch (e) {
-                    grid.innerHTML = "<div class='error-msg'>تعذّر تحميل القنوات المباشرة. تحقق من إعدادات السيرفر</div>";
+                    grid.innerHTML = "<div class='error-msg'>تعذّر جلب القنوات المباشرة. تحقق من بيانات السيرفر (اسم المستخدم/كلمة المرور/الهوست)</div>";
                 }
             } else if (tab === 'movies') {
                 document.getElementById("section-title").innerText = "مكتبة الأفلام الشاملة";
@@ -828,12 +849,12 @@
                         fetchXtreamApi(catUrl),
                         fetchXtreamApi(streamUrl)
                     ]);
-                    currentCategories = cats || [];
-                    currentItems = streams || [];
+                    currentCategories = Array.isArray(cats) ? cats : [];
+                    currentItems = Array.isArray(streams) ? streams : [];
                     renderCategoriesBar(currentCategories, 'movies');
                     filterAndRender('movies', host, user, pass);
                 } catch (e) {
-                    grid.innerHTML = "<div class='error-msg'>تعذّر تحميل قائمة الأفلام. تحقق من إعدادات السيرفر</div>";
+                    grid.innerHTML = "<div class='error-msg'>تعذّر جلب قائمة الأفلام. تحقق من بيانات السيرفر (اسم المستخدم/كلمة المرور/الهوست)</div>";
                 }
             } else if (tab === 'series') {
                 document.getElementById("section-title").innerText = "مكتبة المسلسلات والبرامج الشاملة";
@@ -846,12 +867,12 @@
                         fetchXtreamApi(catUrl),
                         fetchXtreamApi(streamUrl)
                     ]);
-                    currentCategories = cats || [];
-                    currentItems = streams || [];
+                    currentCategories = Array.isArray(cats) ? cats : [];
+                    currentItems = Array.isArray(streams) ? streams : [];
                     renderCategoriesBar(currentCategories, 'series');
                     filterAndRender('series', host, user, pass);
                 } catch (e) {
-                    grid.innerHTML = "<div class='error-msg'>تعذّر تحميل قائمة المسلسلات. تحقق من إعدادات السيرفر</div>";
+                    grid.innerHTML = "<div class='error-msg'>تعذّر جلب قائمة المسلسلات. تحقق من بيانات السيرفر (اسم المستخدم/كلمة المرور/الهوست)</div>";
                 }
             }
         }
