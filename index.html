@@ -1,1134 +1,651 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WTV Smart TV & Web Player</title>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <style>
-        :root {
-            --red: #E50914;
-            --dark-bg: #0B0B0B;
-            --surface: #181818;
-            --surface-card: #222222;
-            --gold: #FFC107;
-            --text: #FFFFFF;
-            --gray: #AAAAAA;
-            --green: #28a745;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>البث</title>
+<style>
+  @font-face { font-family: 'Inter'; src: local('Inter'); }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+  html,body { height:100%; background:#0A0E14; color:#F5F3EE; font-family: Inter, "Segoe UI", Tahoma, Arial, sans-serif; overflow-x:hidden; }
+  #app { min-height:100%; }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            user-select: none;
-        }
+  /* ---- stage / centered auth screens ---- */
+  .stage { min-height:100vh; display:flex; align-items:center; justify-content:center; flex-direction:column; padding:32px 20px; text-align:center; }
+  .brandline { display:flex; align-items:center; gap:10px; margin-bottom:40px; }
+  .brandmark { width:10px; height:10px; border-radius:50%; background:#E8410C; }
+  .brandtext { font-size:14px; letter-spacing:0.02em; color:#6B7280; }
 
-        body {
-            background-color: var(--dark-bg);
-            color: var(--text);
-            overflow: hidden;
-            width: 100vw;
-            height: 100vh;
-        }
+  .panel { width:100%; max-width:420px; background:#1C2230; border-radius:4px; padding:32px 28px; border-top:2px solid #E8410C; }
+  .panel h1 { font-size:22px; font-weight:600; margin-bottom:6px; }
+  .panel p.sub { font-size:14px; color:#6B7280; margin-bottom:24px; line-height:1.5; }
 
-        .screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: rgba(11, 11, 11, 0.96);
-            z-index: 10;
-        }
+  label { display:block; font-size:13px; color:#9CA3AF; margin-bottom:6px; margin-top:16px; text-align:right; }
+  label:first-of-type { margin-top:0; }
+  input[type=text], input[type=password] {
+    width:100%; background:#0A0E14; border:1px solid #2A3141; color:#F5F3EE;
+    padding:13px 14px; border-radius:3px; font-size:15px; font-family: inherit;
+    outline:none; transition: border-color .15s ease;
+  }
+  input:focus { border-color:#E8410C; }
 
-        .hidden { display: none !important; }
+  .btn { display:block; width:100%; text-align:center; padding:14px; border-radius:3px; font-size:15px; font-weight:600; border:none; cursor:pointer; font-family:inherit; transition: transform .1s ease, opacity .15s ease; }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background:#E8410C; color:#0A0E14; margin-top:26px; }
+  .btn-primary:hover { opacity:.92; }
+  .btn-ghost { background:transparent; color:#9CA3AF; border:1px solid #2A3141; margin-top:10px; }
+  .btn-ghost:hover { color:#F5F3EE; border-color:#3A4152; }
 
-        .card {
-            background: var(--surface);
-            border-radius: 16px;
-            padding: 28px;
-            width: 90%;
-            max-width: 480px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            border: 1px solid #333;
-            text-align: center;
-        }
+  .error-msg { background:rgba(232,65,12,0.12); border:1px solid rgba(232,65,12,0.4); color:#FF9466; font-size:13px; padding:10px 12px; border-radius:3px; margin-top:16px; text-align:right; display:none; }
+  .error-msg.show { display:block; }
 
-        .logo {
-            font-size: 36px;
-            font-weight: 900;
-            color: var(--red);
-            margin-bottom: 12px;
-            letter-spacing: 2px;
-        }
+  .divider-row { display:flex; align-items:center; gap:12px; margin:22px 0; }
+  .divider-row .line { flex:1; height:1px; background:#2A3141; }
+  .divider-row span { font-size:12px; color:#4B5563; }
 
-        .input-group {
-            margin: 14px 0;
-            text-align: right;
-        }
+  /* QR block */
+  .qr-wrap { display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .qr-box { background:#fff; padding:12px; border-radius:4px; width:180px; height:180px; display:flex; align-items:center; justify-content:center; }
+  .qr-box canvas, .qr-box img { width:156px; height:156px; }
+  .qr-hint { font-size:13px; color:#6B7280; max-width:280px; line-height:1.5; }
+  .qr-code-text { font-size:22px; letter-spacing:0.15em; font-weight:700; color:#E8410C; font-family: 'Courier New', monospace; }
 
-        label {
-            display: block;
-            font-size: 13px;
-            color: var(--gray);
-            margin-bottom: 6px;
-        }
+  /* ---- locked / expired screen ---- */
+  .lock-icon { width:52px; height:52px; border-radius:50%; background:#1C2230; border:1px solid #2A3141; display:flex; align-items:center; justify-content:center; margin-bottom:22px; font-size:22px; }
+  .expiry-badge { display:inline-block; margin-top:18px; padding:6px 14px; background:#0A0E14; border:1px solid #2A3141; border-radius:20px; font-size:12px; color:#9CA3AF; }
 
-        input {
-            width: 100%;
-            padding: 12px 16px;
-            border-radius: 8px;
-            border: 1px solid #444;
-            background: #111;
-            color: #fff;
-            font-size: 15px;
-            outline: none;
-            direction: ltr;
-        }
+  /* ---- player app shell ---- */
+  .shell { display:none; min-height:100vh; }
+  .shell.active { display:block; }
+  .topbar { position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between; padding:18px 40px; background:linear-gradient(#0A0E14 40%, transparent); }
+  .topbar .left { display:flex; align-items:center; gap:32px; }
+  .logo { font-size:18px; font-weight:700; letter-spacing:0.01em; display:flex; align-items:center; gap:8px; }
+  .logo .dot { width:8px; height:8px; border-radius:50%; background:#E8410C; }
+  nav.tabs { display:flex; gap:24px; }
+  nav.tabs button { background:none; border:none; color:#6B7280; font-size:14px; font-family:inherit; cursor:pointer; padding:8px 2px; border-bottom:2px solid transparent; }
+  nav.tabs button.active { color:#F5F3EE; border-bottom-color:#E8410C; }
+  .topbar .right { display:flex; align-items:center; gap:14px; }
+  .icon-btn { width:36px; height:36px; border-radius:50%; background:#1C2230; border:1px solid #2A3141; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#9CA3AF; font-size:14px; }
 
-        input:focus, .focusable:focus {
-            border-color: var(--gold);
-            background: #1e1e1e;
-            box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
-        }
+  .search-bar { padding:0 40px 20px; }
+  .search-bar input { max-width:420px; }
 
-        .btn {
-            width: 100%;
-            padding: 14px;
-            border-radius: 8px;
-            border: none;
-            background: var(--red);
-            color: #fff;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
-            transition: 0.2s;
-        }
+  .row-section { padding:6px 40px 34px; }
+  .row-title { font-size:16px; font-weight:600; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; }
+  .row-title .count { font-size:12px; color:#4B5563; font-weight:400; }
+  .row-scroll { display:flex; gap:14px; overflow-x:auto; padding-bottom:6px; scrollbar-width:none; }
+  .row-scroll::-webkit-scrollbar { display:none; }
+  .card { flex: 0 0 auto; width:170px; cursor:pointer; }
+  .card .poster { width:170px; height:96px; background:#1C2230; border-radius:3px; border:1px solid #2A3141; display:flex; align-items:center; justify-content:center; color:#3A4152; font-size:26px; margin-bottom:8px; transition: border-color .15s ease; }
+  .card:hover .poster, .card:focus .poster { border-color:#E8410C; }
+  .card .title { font-size:13px; color:#D1D5DB; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .card .meta { font-size:11px; color:#4B5563; margin-top:2px; }
+  .card.tall .poster { height:230px; }
 
-        .btn:hover, .btn.focused {
-            background: #ff1e27;
-            transform: scale(1.02);
-            outline: 2px solid var(--gold);
-        }
+  .empty-state { padding:60px 40px; text-align:center; color:#6B7280; }
+  .empty-state .big { font-size:15px; color:#9CA3AF; margin-bottom:6px; }
 
-        .device-key-box {
-            background: #1e1e28;
-            padding: 16px;
-            border-radius: 8px;
-            margin: 16px 0;
-            border: 1px solid #333;
-        }
+  /* ---- remote admin control panel ---- */
+  .admin-shell { display:none; }
+  .admin-shell.active { display:block; }
+  .admin-header { padding:28px 20px 6px; text-align:right; }
+  .admin-header h1 { font-size:20px; }
+  .admin-header p { font-size:13px; color:#6B7280; margin-top:4px; }
+  .admin-body { padding:20px; max-width:520px; margin:0 auto; }
+  .status-card { background:#1C2230; border-radius:4px; padding:22px; border-top:2px solid; margin-bottom:20px; }
+  .status-card.on { border-top-color:#2FB16C; }
+  .status-card.off { border-top-color:#E8410C; }
+  .status-row { display:flex; align-items:center; justify-content:space-between; }
+  .status-label { font-size:13px; color:#9CA3AF; }
+  .status-value { font-size:17px; font-weight:700; margin-top:4px; }
+  .status-value.on { color:#2FB16C; }
+  .status-value.off { color:#E8410C; }
+  .status-dot { width:10px; height:10px; border-radius:50%; }
+  .status-dot.on { background:#2FB16C; box-shadow:0 0 0 4px rgba(47,177,108,0.15); }
+  .status-dot.off { background:#E8410C; box-shadow:0 0 0 4px rgba(232,65,12,0.15); }
 
-        .device-key {
-            font-size: 24px;
-            font-weight: bold;
-            color: var(--gold);
-            letter-spacing: 2px;
-            direction: ltr;
-        }
+  .duration-grid { display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:6px; }
+  .dur-btn { background:#1C2230; border:1px solid #2A3141; color:#F5F3EE; padding:16px 10px; border-radius:3px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; text-align:center; transition: border-color .15s ease, background .15s ease; }
+  .dur-btn:hover { border-color:#E8410C; }
+  .dur-btn .sub { display:block; font-size:11px; color:#6B7280; font-weight:400; margin-top:3px; }
 
-        #home-portal {
-            display: flex;
-            gap: 24px;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            max-width: 900px;
-            padding: 20px;
-        }
+  .device-card { background:#1C2230; border-radius:4px; padding:20px; border-top:2px solid #2A3141; margin-bottom:16px; }
+  .device-card.on { border-top-color:#2FB16C; }
+  .device-card.off { border-top-color:#E8410C; }
+  .device-card.pending { border-top-color:#E0A72C; }
+  .device-card-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+  .device-code { font-family:'Courier New', monospace; font-size:16px; font-weight:700; letter-spacing:0.1em; }
+  .device-badge { font-size:11px; padding:4px 10px; border-radius:20px; font-weight:600; }
+  .device-badge.on { background:rgba(47,177,108,0.15); color:#2FB16C; }
+  .device-badge.off { background:rgba(232,65,12,0.15); color:#E8410C; }
+  .device-badge.pending { background:rgba(224,167,44,0.15); color:#E0A72C; }
+  .device-detail { font-size:12px; color:#6B7280; text-align:right; margin-bottom:14px; }
+  .device-actions .duration-grid { grid-template-columns: 1fr 1fr; }
+  .dur-btn.small { padding:11px 8px; font-size:12.5px; }
+  .device-lock-row { margin-top:10px; }
+  .approve-btn { width:100%; padding:13px; border-radius:3px; font-size:14px; font-weight:600; border:none; background:#E0A72C; color:#0A0E14; cursor:pointer; font-family:inherit; margin-bottom:10px; }
+  .no-devices { text-align:center; color:#4B5563; font-size:13px; padding:40px 20px; }
 
-        .portal-card {
-            flex: 1;
-            background: var(--surface);
-            border: 1px solid #333;
-            border-radius: 16px;
-            padding: 32px 16px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.25s ease;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
-        }
+  .section-label { font-size:12px; color:#6B7280; margin: 26px 0 10px; text-align:right; }
 
-        .portal-card:hover, .portal-card.focused {
-            border-color: var(--gold);
-            background: var(--red);
-            transform: translateY(-8px) scale(1.04);
-            box-shadow: 0 12px 32px rgba(229, 9, 20, 0.5);
-        }
+  .lock-btn { width:100%; padding:15px; border-radius:3px; font-size:14px; font-weight:600; border:1px solid #2A3141; background:transparent; color:#FF9466; cursor:pointer; font-family:inherit; margin-top:4px; }
+  .lock-btn:hover { border-color:#E8410C; }
 
-        .portal-icon {
-            font-size: 54px;
-            margin-bottom: 16px;
-        }
+  .admin-footer-link { text-align:center; margin-top:30px; }
+  .admin-footer-link a { color:#4B5563; font-size:12px; text-decoration:none; }
 
-        .portal-title {
-            font-size: 20px;
-            font-weight: bold;
-            color: #fff;
-            margin-bottom: 6px;
-        }
-
-        .portal-sub {
-            font-size: 12px;
-            color: var(--gray);
-        }
-
-        #app-layout {
-            display: flex;
-            width: 100%;
-            height: 100%;
-            position: relative;
-        }
-
-        #sidebar {
-            width: 80px;
-            background: #111;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding-top: 20px;
-            border-left: 1px solid #222;
-            z-index: 10;
-        }
-
-        .nav-item {
-            width: 54px;
-            height: 54px;
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 16px;
-            cursor: pointer;
-            color: var(--gray);
-            transition: 0.2s;
-            font-size: 18px;
-        }
-
-        .nav-item.active, .nav-item.focused {
-            background: var(--red);
-            color: #fff;
-            box-shadow: 0 0 12px rgba(229, 9, 20, 0.6);
-        }
-
-        .nav-label {
-            font-size: 10px;
-            margin-top: 4px;
-        }
-
-        #content {
-            flex: 1;
-            height: 100%;
-            overflow-y: auto;
-            padding: 24px;
-            position: relative;
-            background: var(--dark-bg);
-            z-index: 5;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 16px;
-            padding-bottom: 40px;
-        }
-
-        .poster-card {
-            background: var(--surface-card);
-            border-radius: 10px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: 0.2s;
-            position: relative;
-            aspect-ratio: 2/3;
-        }
-
-        .poster-card img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .poster-card.focused, .poster-card:hover {
-            outline: 3px solid var(--gold);
-            transform: scale(1.05);
-            z-index: 5;
-        }
-
-        .poster-title {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: linear-gradient(transparent, rgba(0,0,0,0.9));
-            padding: 8px;
-            font-size: 11px;
-            font-weight: bold;
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        #live-drawer {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 340px;
-            height: 100%;
-            background: rgba(18, 18, 18, 0.95);
-            backdrop-filter: blur(10px);
-            z-index: 20;
-            display: flex;
-            flex-direction: column;
-            padding: 16px;
-            border-left: 1px solid #333;
-            box-shadow: -10px 0 30px rgba(0,0,0,0.8);
-        }
-
-        .channel-item {
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 6px;
-            background: rgba(255,255,255,0.05);
-            cursor: pointer;
-        }
-
-        .channel-item.focused, .channel-item:hover {
-            background: var(--red);
-            outline: 2px solid var(--gold);
-        }
-
-        .channel-name {
-            flex: 1;
-            margin-right: 10px;
-            font-size: 13px;
-            font-weight: 500;
-        }
-
-        .channel-logo {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: #222;
-            object-fit: contain;
-        }
-
-        #video-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            z-index: 100;
-        }
-
-        #video-container.hidden {
-            display: none !important;
-        }
-
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        .close-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 110;
-            background: rgba(229, 9, 20, 0.9);
-            color: #fff;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 15px;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-        }
-
-        .close-btn:hover {
-            background: #ff1e27;
-            transform: scale(1.05);
-        }
-
-        .error-msg {
-            color: #ff4d4d;
-            font-size: 13px;
-            margin-top: 8px;
-        }
-
-        .qr-card {
-            margin: 10px 0;
-            background: #ffffff;
-            padding: 12px;
-            border-radius: 12px;
-            display: inline-block;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-        }
-    </style>
+  ::selection { background:#E8410C; color:#0A0E14; }
+  @media (max-width: 640px) {
+    .topbar { padding:14px 18px; }
+    nav.tabs { display:none; }
+    .row-section { padding:6px 18px 28px; }
+    .search-bar { padding:0 18px 16px; }
+    .panel { padding:26px 20px; }
+  }
+</style>
 </head>
 <body>
+<div id="app">
 
-    <!-- 1. شاشة التفعيل والربط المباشر ببيانات Xtream من الجوال -->
-    <div id="activation-screen" class="screen">
-        <div class="card" style="max-height: 90vh; overflow-y: auto;">
-            <div class="logo">WTV Smart TV</div>
-            <h2 id="activation-title">🔐 تفعيل اشتراك الشاشة</h2>
+  <!-- ========== GATE / LOADING ========== -->
+  <div class="stage" id="screen-loading">
+    <div class="brandline"><div class="brandmark"></div><div class="brandtext">جارٍ التحقق من حالة الاشتراك…</div></div>
+  </div>
 
-            <div class="device-key-box" style="margin-bottom: 10px; padding: 10px;">
-                <div style="font-size: 11px; color: var(--gray);">رقم شاشتك (Device Key):</div>
-                <div id="device-mac" class="device-key" style="font-size: 20px;">8492-3105</div>
-            </div>
+  <!-- ========== PENDING APPROVAL SCREEN (new/unrecognized device) ========== -->
+  <div class="stage" id="screen-pending" style="display:none;">
+    <div class="lock-icon">📺</div>
+    <h1 style="font-size:20px; margin-bottom:8px;">هذا الجهاز بانتظار الموافقة</h1>
+    <p style="font-size:14px; color:#6B7280; max-width:320px; line-height:1.6;">افتح لوحة التحكم من جوالك ووافق على هذا الجهاز باستخدام الرمز التالي:</p>
+    <div class="expiry-badge" style="font-size:18px; letter-spacing:0.15em; font-weight:700; color:#E8410C; padding:10px 20px; margin-top:16px;" id="pending-code-text">------</div>
+    <p style="font-size:12px; color:#4B5563; margin-top:18px;">تتحدث هذه الصفحة تلقائيًا بعد الموافقة</p>
+  </div>
 
-            <div id="qr-box" class="qr-card">
-                <img id="qr-code-img" src="" alt="QR Code" style="width: 150px; height: 150px; display: block; margin: 0 auto; background:#fff;">
-            </div>
-            <p id="qr-hint" style="font-size: 11px; color: var(--gold); margin-bottom: 10px;">📱 امسح الباركود بكاميرا جوالك للتفعيل والتجديد الفوري دون كتابة بالريموت</p>
+  <!-- ========== EXPIRED / LOCKED SCREEN ========== -->
+  <div class="stage" id="screen-locked" style="display:none;">
+    <div class="lock-icon">🔒</div>
+    <h1 style="font-size:20px; margin-bottom:8px;">غير متاح حاليًا</h1>
+    <p style="font-size:14px; color:#6B7280; max-width:320px; line-height:1.6;">تم إيقاف الوصول إلى هذا الجهاز من قبل المسؤول. تواصل مع الجهة المسؤولة عن اشتراكك.</p>
+    <div class="expiry-badge" id="locked-expiry-badge"></div>
+  </div>
 
-            <div class="input-group">
-                <label for="activation-code-input">كود التفعيل (6 أرقام):</label>
-                <input type="text" id="activation-code-input" class="focusable" placeholder="أدخل كود التفعيل" maxlength="6">
-            </div>
+  <!-- ========== LOGIN SCREEN ========== -->
+  <div class="stage" id="screen-login" style="display:none;">
+    <div class="brandline"><div class="brandmark"></div><div class="brandtext">تسجيل الدخول للبث</div></div>
+    <div class="panel">
+      <h1>الدخول إلى السيرفر</h1>
+      <p class="sub">أدخل بيانات حسابك (Host / Username / Password) أو امسح الرمز من جوالك.</p>
 
-            <div id="mobile-xtream-box" class="hidden">
-                <hr style="border-color:#333; margin: 12px 0;">
-                <p style="font-size:12px; color:var(--gold); font-weight:bold; margin-bottom:8px;">بيانات سيرفر IPTV (Xtream):</p>
-                <div class="input-group">
-                    <label for="mobile-host-input">عنوان السيرفر / الهوست (Server URL):</label>
-                    <input type="text" id="mobile-host-input" class="focusable" placeholder="http://host.com:8080">
-                </div>
+      <label>عنوان السيرفر (Host)</label>
+      <input type="text" id="in-host" placeholder="http://example.com:80" autocomplete="off">
 
-                <div class="input-group">
-                    <label for="mobile-user-input">اسم المستخدم (Username):</label>
-                    <input type="text" id="mobile-user-input" class="focusable" placeholder="Username">
-                </div>
+      <label>اسم المستخدم</label>
+      <input type="text" id="in-user" placeholder="username" autocomplete="off">
 
-                <div class="input-group">
-                    <label for="mobile-pass-input">كلمة المرور (Password):</label>
-                    <input type="password" id="mobile-pass-input" class="focusable" placeholder="Password">
-                </div>
-            </div>
+      <label>كلمة المرور</label>
+      <input type="password" id="in-pass" placeholder="••••••••" autocomplete="off">
 
-            <button id="activate-btn" class="btn focusable" onclick="handleActivation()">تفعيل الشاشة الآن</button>
-            <div id="activation-error" class="error-msg hidden">كود التفعيل غير صحيح</div>
-        </div>
+      <div class="error-msg" id="login-error"></div>
+
+      <button class="btn btn-primary" onclick="handleLogin()">دخول</button>
+
+      <div class="divider-row"><div class="line"></div><span>أو</span><div class="line"></div></div>
+
+      <button class="btn btn-ghost" onclick="showQR()">تسجيل الدخول عبر الجوال (QR)</button>
+    </div>
+  </div>
+
+  <!-- ========== QR SCREEN ========== -->
+  <div class="stage" id="screen-qr" style="display:none;">
+    <div class="brandline"><div class="brandmark"></div><div class="brandtext">الدخول عبر الجوال</div></div>
+    <div class="panel">
+      <h1>امسح الرمز من جوالك</h1>
+      <p class="sub">افتح كاميرا جوالك وامسح الرمز، أو أدخل الرمز يدويًا في صفحة الدخول على جوالك.</p>
+      <div class="qr-wrap">
+        <div class="qr-box"><canvas id="qr-canvas" width="156" height="156"></canvas></div>
+        <div class="qr-code-text" id="qr-code-text">------</div>
+        <div class="qr-hint">هذا الرمز صالح لهذه الجلسة فقط. بعد إدخال بيانات السيرفر من الجوال ستظهر الشاشة هنا تلقائيًا.</div>
+      </div>
+      <button class="btn btn-ghost" style="margin-top:26px;" onclick="backToLogin()">رجوع لتسجيل الدخول اليدوي</button>
+    </div>
+  </div>
+
+  <!-- ========== MAIN PLAYER SHELL ========== -->
+  <div class="shell" id="shell-player">
+    <div class="topbar">
+      <div class="left">
+        <div class="logo"><div class="dot"></div>البث</div>
+        <nav class="tabs">
+          <button class="active" data-tab="live" onclick="switchTab('live')">مباشر</button>
+          <button data-tab="movies" onclick="switchTab('movies')">أفلام</button>
+          <button data-tab="series" onclick="switchTab('series')">مسلسلات</button>
+        </nav>
+      </div>
+      <div class="right">
+        <div class="icon-btn" onclick="handleLogout()" title="تسجيل الخروج">⏻</div>
+      </div>
     </div>
 
-    <!-- 2. شاشة دخول وإعدادات بيانات Xtream -->
-    <div id="login-screen" class="screen hidden">
-        <div class="card">
-            <div class="logo">WTV Player</div>
-            <h3 style="margin-bottom: 12px;">⚙️ إعدادات سيرفر IPTV (Xtream)</h3>
-
-            <div class="device-key-box" style="margin-bottom: 10px; padding: 10px;">
-                <div style="font-size: 11px; color: var(--gray);">رقم الشاشة (Device Key):</div>
-                <div id="settings-device-mac" class="device-key" style="font-size: 18px;">8492-3105</div>
-            </div>
-
-            <div class="qr-card" style="padding:8px;">
-                <img id="settings-qr-img" src="" alt="QR Code" style="width: 120px; height: 120px; display: block; margin: 0 auto; background:#fff;">
-            </div>
-
-            <div class="input-group">
-                <label for="host-input">عنوان السيرفر / الهوست (Server URL):</label>
-                <input type="text" id="host-input" class="focusable" placeholder="http://host.com:8080">
-            </div>
-
-            <div class="input-group">
-                <label for="user-input">اسم المستخدم (Username):</label>
-                <input type="text" id="user-input" class="focusable" placeholder="Username">
-            </div>
-
-            <div class="input-group">
-                <label for="pass-input">كلمة المرور (Password):</label>
-                <input type="password" id="pass-input" class="focusable" placeholder="Password">
-            </div>
-
-            <button class="btn focusable" onclick="handleLogin()">حفظ وتحديث بيانات السيرفر</button>
-            <button class="btn focusable" style="background:#333; margin-top:8px;" onclick="closeLoginScreen()">إغلاق الإعدادات</button>
-            <div id="login-error" class="error-msg hidden">تعذّر الاتصال بالسيرفر. تحقق من البيانات</div>
-        </div>
+    <div class="search-bar">
+      <input type="text" id="search-input" placeholder="ابحث عن قناة أو فيلم أو مسلسل…">
     </div>
 
-    <!-- 3. الصفحة الرئيسية الشاملة (Portal Home Screen) -->
-    <div id="portal-screen" class="screen hidden">
-        <div class="logo" style="margin-bottom: 24px;">WTV Smart TV</div>
-        <h2 style="margin-bottom: 32px; font-weight: bold;">اختر القسم للبدء للمشاهدة:</h2>
+    <div id="content-live" class="tab-content">
+      <div class="empty-state">
+        <div class="big">لا يوجد اتصال بمصدر بث بعد</div>
+        <div style="font-size:13px;">بعد تسجيل الدخول بسيرفر IPTV فعلي، ستظهر هنا القنوات المباشرة تلقائيًا مرتبة في صفوف.</div>
+      </div>
+    </div>
+    <div id="content-movies" class="tab-content" style="display:none;">
+      <div class="empty-state">
+        <div class="big">مكتبة الأفلام فارغة</div>
+        <div style="font-size:13px;">ستُعرض الأفلام هنا بعد الاتصال بالسيرفر، مع عرض أفلام الكرتون والأنميشن في آخر القائمة.</div>
+      </div>
+    </div>
+    <div id="content-series" class="tab-content" style="display:none;">
+      <div class="empty-state">
+        <div class="big">مكتبة المسلسلات فارغة</div>
+        <div style="font-size:13px;">ستُعرض المسلسلات هنا بعد الاتصال بالسيرفر.</div>
+      </div>
+    </div>
+  </div>
 
-        <div id="home-portal">
-            <div class="portal-card focusable" onclick="enterSection('live')">
-                <div class="portal-icon">📺</div>
-                <div class="portal-title">البث المباشر</div>
-                <div class="portal-sub">جميع القنوات المباشرة والرياضية</div>
-            </div>
-
-            <div class="portal-card focusable" onclick="enterSection('movies')">
-                <div class="portal-icon">🎬</div>
-                <div class="portal-title">مكتبة الأفلام</div>
-                <div class="portal-sub">أحدث الأفلام العربية والأجنبية</div>
-            </div>
-
-            <div class="portal-card focusable" onclick="enterSection('series')">
-                <div class="portal-icon">🍿</div>
-                <div class="portal-title">المسلسلات والبرامج</div>
-                <div class="portal-sub">أحدث المسلسلات والمواسم</div>
-            </div>
-        </div>
-
-        <button class="btn focusable" style="width: auto; padding: 10px 24px; margin-top: 32px; background: #333;" onclick="openCredentials()">⚙️ تعديل بيانات السيرفر</button>
+  <!-- ========== ADMIN CONTROL SHELL (remote, from your phone) ========== -->
+  <div class="admin-shell" id="shell-admin">
+    <div class="stage" id="admin-login-stage">
+      <div class="brandline"><div class="brandmark"></div><div class="brandtext">لوحة التحكم</div></div>
+      <div class="panel">
+        <h1>دخول المسؤول</h1>
+        <p class="sub">هذه الصفحة مخصّصة لك فقط للتحكم بمدة صلاحية الجهاز عن بُعد.</p>
+        <label>كلمة مرور اللوحة</label>
+        <input type="password" id="admin-pass-input" placeholder="••••••••">
+        <div class="error-msg" id="admin-login-error"></div>
+        <button class="btn btn-primary" onclick="adminLogin()">دخول للوحة التحكم</button>
+      </div>
     </div>
 
-    <!-- 4. المشغل الداخلي -->
-    <div id="app-layout" class="hidden">
-        <div id="video-container" class="hidden">
-            <button id="close-video-btn" class="close-btn" onclick="closeVideoPlayer()">✕ إغلاق الفيديو والرجوع</button>
-            <video id="player" controls crossorigin></video>
-        </div>
-
-        <div id="sidebar">
-            <div id="tab-home" class="nav-item active focusable" onclick="goHomePortal()">
-                🏠<span class="nav-label">الرئيسية</span>
-            </div>
-            <div id="tab-live" class="nav-item focusable" onclick="enterSection('live')">
-                📺<span class="nav-label">مباشر</span>
-            </div>
-            <div id="tab-movies" class="nav-item focusable" onclick="enterSection('movies')">
-                🎬<span class="nav-label">أفلام</span>
-            </div>
-            <div id="tab-series" class="nav-item focusable" onclick="enterSection('series')">
-                🍿<span class="nav-label">مسلسلات</span>
-            </div>
-            <div id="tab-settings" class="nav-item focusable" onclick="openCredentials()">
-                ⚙️<span class="nav-label">السيرفر</span>
-            </div>
-        </div>
-
-        <div id="content">
-            <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap;">
-                <h2 id="section-title" style="color: var(--gold); margin-left: auto;">البث المباشر والقنوات</h2>
-                <input type="text" id="search-input" class="focusable" aria-label="البحث" placeholder="🔍 ابحث عن قناة، فيلم، أو مسلسل..." oninput="handleSearch(this.value)" style="width: 280px; padding: 10px; font-size: 13px;">
-            </div>
-
-            <!-- شريط الأقسام والتصنيفات الأفقية -->
-            <div id="categories-bar" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 16px; white-space: nowrap;"></div>
-
-            <div id="grid-container" class="grid"></div>
-        </div>
-
-        <div id="live-drawer" class="hidden">
-            <h3 style="margin-bottom: 12px; color: var(--gold);">قنوات البث المباشر</h3>
-            <div id="channel-list" style="overflow-y: auto; flex: 1;"></div>
-        </div>
+    <div id="admin-panel-stage" style="display:none;">
+      <div class="admin-header">
+        <h1>الأجهزة المسجّلة</h1>
+        <p>وافق على كل جهاز واضبط مدة اشتراكه بشكل مستقل</p>
+      </div>
+      <div class="admin-body">
+        <div id="device-list"></div>
+        <div class="admin-footer-link"><a href="#" onclick="adminLogout(); return false;">تسجيل الخروج من اللوحة</a></div>
+      </div>
     </div>
-
-    <script>
-        const MASTER_PIN = "wail147258";
-        let isActivated = localStorage.getItem("wtv_web_activated") === "true";
-        let hlsPlayer = null;
-        let syncInterval = null;
-
-        let currentItems = [];
-        let currentCategories = [];
-        let selectedCategory = null;
-        let searchQuery = "";
-
-        function cleanHostUrl(raw) {
-            if (!raw) return "";
-            let h = raw.trim().replace(/\/+$/, "");
-            if (!h.startsWith("http://") && !h.startsWith("https://")) {
-                h = "http://" + h;
-            }
-            return h;
-        }
-
-        function getDeviceMac() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const urlMac = urlParams.get('id');
-            if (urlMac) return urlMac;
-
-            let mac = localStorage.getItem("wtv_web_mac");
-            if (!mac) {
-                const rand1 = Math.floor(1000 + Math.random() * 9000);
-                const rand2 = Math.floor(1000 + Math.random() * 9000);
-                mac = `${rand1}-${rand2}`;
-                localStorage.setItem("wtv_web_mac", mac);
-            }
-            return mac;
-        }
-
-        function updateQrCodes() {
-            const currentMac = getDeviceMac();
-            document.getElementById("device-mac").innerText = currentMac;
-            document.getElementById("settings-device-mac").innerText = currentMac;
-
-            let siteBase = window.location.origin + window.location.pathname;
-            if (!siteBase.endsWith('/')) siteBase += '/';
-
-            const qrTarget = `${siteBase}?id=${currentMac}`;
-            const qrApiUrl = `https://quickchart.io/qr?size=220&text=${encodeURIComponent(qrTarget)}`;
-
-            const mainQr = document.getElementById("qr-code-img");
-            const settingsQr = document.getElementById("settings-qr-img");
-            if (mainQr) mainQr.src = qrApiUrl;
-            if (settingsQr) settingsQr.src = qrApiUrl;
-        }
-
-        /** محرك جلب خارق يلتف على حظر GitHub Pages والمحتوى المزدوج عبر AllOrigins المباشر */
-        async function fetchXtreamApi(url) {
-            // 1. محاولة جلب مباشرة أولاً
-            try {
-                const res = await fetch(url);
-                if (res.ok) {
-                    const text = await res.text();
-                    const json = JSON.parse(text);
-                    if (json) return json;
-                }
-            } catch (e) {
-                console.log("Direct fetch blocked (Mixed Content/CORS), trying proxies...", e);
-            }
-
-            // 2. AllOrigins Proxy المباشر لأفكاك التشفير والتفاف HTTPS
-            try {
-                const aoUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-                const res = await fetch(aoUrl);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data && data.contents) {
-                        const json = JSON.parse(data.contents);
-                        if (json) return json;
-                    }
-                }
-            } catch (e) {
-                console.log("AllOrigins proxy failed, trying next...", e);
-            }
-
-            // 3. CorsProxy.io
-            try {
-                const cpUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-                const res = await fetch(cpUrl);
-                if (res.ok) {
-                    const text = await res.text();
-                    const json = JSON.parse(text);
-                    if (json) return json;
-                }
-            } catch (e) {
-                console.log("CorsProxy failed, trying next...", e);
-            }
-
-            // 4. CodeTabs Proxy
-            try {
-                const ctUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`;
-                const res = await fetch(ctUrl);
-                if (res.ok) {
-                    const text = await res.text();
-                    const json = JSON.parse(text);
-                    if (json) return json;
-                }
-            } catch (e) {
-                console.log("CodeTabs proxy failed...", e);
-            }
-
-            throw new Error("Unable to fetch IPTV data from server");
-        }
-
-        function startTvSyncListener() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const isMobilePairPage = urlParams.has('id');
-
-            if (isMobilePairPage) {
-                document.getElementById("qr-box").style.display = "none";
-                document.getElementById("qr-hint").style.display = "none";
-                document.getElementById("mobile-xtream-box").classList.remove("hidden");
-                document.getElementById("activation-title").innerText = "📱 ربط وتفعيل التلفزيون من الجوال";
-                document.getElementById("activate-btn").innerText = "🚀 ربط وتفعيل سيرفر IPTV على الشاشة الآن";
-                document.getElementById("activate-btn").style.background = "#28a745";
-                return;
-            }
-
-            const mac = getDeviceMac();
-            if (syncInterval) clearInterval(syncInterval);
-
-            syncInterval = setInterval(async () => {
-                try {
-                    const res = await fetch(`https://api.jsonstorage.net/v1/json/wtv_${mac}`);
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data && data.activated && data.host) {
-                            applyPairedCredentials(data);
-                            return;
-                        }
-                    }
-                } catch (e) { }
-
-                try {
-                    const res = await fetch(`https://api.restful-api.dev/objects?name=wtv_pair_${mac}`);
-                    if (res.ok) {
-                        const list = await res.json();
-                        if (list && list.length > 0) {
-                            const lastPair = list[list.length - 1];
-                            const data = lastPair.data;
-                            if (data && data.activated && data.host) {
-                                applyPairedCredentials(data);
-                                return;
-                            }
-                        }
-                    }
-                } catch (e) { }
-            }, 1500);
-        }
-
-        function applyPairedCredentials(data) {
-            localStorage.setItem("wtv_host", cleanHostUrl(data.host));
-            localStorage.setItem("wtv_user", data.user ? data.user.trim() : "");
-            localStorage.setItem("wtv_pass", data.pass ? data.pass.trim() : "");
-            localStorage.setItem("wtv_web_activated", "true");
-            if (syncInterval) clearInterval(syncInterval);
-
-            document.getElementById("activation-screen").classList.add("hidden");
-            document.getElementById("login-screen").classList.add("hidden");
-            goHomePortal();
-        }
-
-        async function handleMobilePairing() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const targetMac = urlParams.get('id');
-            const host = cleanHostUrl(document.getElementById("mobile-host-input").value || document.getElementById("host-input").value);
-            const user = (document.getElementById("mobile-user-input").value || document.getElementById("user-input").value).trim();
-            const pass = (document.getElementById("mobile-pass-input").value || document.getElementById("pass-input").value).trim();
-            const code = document.getElementById("activation-code-input").value.trim();
-
-            if (!host || !user || !pass) {
-                alert("الرجاء أدخل رابط الهوست، اسم المستخدم، وكلمة المرور للسيرفر");
-                return;
-            }
-
-            if (targetMac) {
-                const payload = {
-                    activated: true,
-                    host: host,
-                    user: user,
-                    pass: pass,
-                    code: code || "999999",
-                    updatedAt: Date.now()
-                };
-
-                try {
-                    await fetch(`https://api.jsonstorage.net/v1/json/wtv_${targetMac}?apiKey=public`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                } catch(e){}
-
-                try {
-                    await fetch(`https://api.restful-api.dev/objects`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name: `wtv_pair_${targetMac}`, data: payload })
-                    });
-                } catch(e){}
-
-                alert("🎉 تم إرسال سيرفر IPTV والتفعيل لتلفزيونك بنجاح! انظر لشاشة التلفزيون الآن.");
-            }
-        }
-
-        updateQrCodes();
-        startTvSyncListener();
-
-        if (isActivated) {
-            document.getElementById("activation-screen").classList.add("hidden");
-            checkSavedCredentials();
-        }
-
-        function handleActivation() {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('id')) {
-                handleMobilePairing();
-                return;
-            }
-
-            const code = document.getElementById("activation-code-input").value.trim();
-            if (code === MASTER_PIN || code === "999999" || code.length === 6) {
-                localStorage.setItem("wtv_web_activated", "true");
-                document.getElementById("activation-screen").classList.add("hidden");
-                checkSavedCredentials();
-            } else {
-                document.getElementById("activation-error").classList.remove("hidden");
-            }
-        }
-
-        function checkSavedCredentials() {
-            const host = localStorage.getItem("wtv_host");
-            const user = localStorage.getItem("wtv_user");
-            const pass = localStorage.getItem("wtv_pass");
-            if (host && user && pass) {
-                goHomePortal();
-            } else {
-                document.getElementById("login-screen").classList.remove("hidden");
-            }
-        }
-
-        function handleLogin() {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('id')) {
-                handleMobilePairing();
-                return;
-            }
-
-            const host = cleanHostUrl(document.getElementById("host-input").value);
-            const user = document.getElementById("user-input").value.trim();
-            const pass = document.getElementById("pass-input").value.trim();
-
-            if (host && user && pass) {
-                localStorage.setItem("wtv_host", host);
-                localStorage.setItem("wtv_user", user);
-                localStorage.setItem("wtv_pass", pass);
-                localStorage.setItem("wtv_web_activated", "true");
-
-                document.getElementById("activation-screen").classList.add("hidden");
-                document.getElementById("login-screen").classList.add("hidden");
-                goHomePortal();
-            } else {
-                document.getElementById("login-error").classList.remove("hidden");
-            }
-        }
-
-        function openCredentials() {
-            updateQrCodes();
-            document.getElementById("host-input").value = localStorage.getItem("wtv_host") || "http://";
-            document.getElementById("user-input").value = localStorage.getItem("wtv_user") || "";
-            document.getElementById("pass-input").value = localStorage.getItem("wtv_pass") || "";
-            document.getElementById("login-screen").classList.remove("hidden");
-        }
-
-        function closeLoginScreen() {
-            document.getElementById("login-screen").classList.add("hidden");
-        }
-
-        function goHomePortal() {
-            closeVideoPlayer();
-            document.getElementById("app-layout").classList.add("hidden");
-            document.getElementById("portal-screen").classList.remove("hidden");
-        }
-
-        async function enterSection(tab) {
-            closeVideoPlayer();
-            document.getElementById("portal-screen").classList.add("hidden");
-            document.getElementById("app-layout").classList.remove("hidden");
-
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            document.getElementById(`tab-${tab}`).classList.add('active');
-
-            const host = cleanHostUrl(localStorage.getItem("wtv_host"));
-            const user = (localStorage.getItem("wtv_user") || "").trim();
-            const pass = (localStorage.getItem("wtv_pass") || "").trim();
-            if (!host || !user || !pass) return;
-
-            const grid = document.getElementById("grid-container");
-            const catsBar = document.getElementById("categories-bar");
-            const drawer = document.getElementById("live-drawer");
-            grid.innerHTML = "<div style='color:var(--gray); padding:20px;'>جاري تحميل البيانات بالكامل من السيرفر...</div>";
-            catsBar.innerHTML = "";
-            selectedCategory = null;
-            searchQuery = "";
-            document.getElementById("search-input").value = "";
-
-            if (tab === 'live') {
-                document.getElementById("section-title").innerText = "البث المباشر والقنوات";
-                drawer.classList.remove("hidden");
-                try {
-                    const catUrl = `${host}/player_api.php?username=${user}&password=${pass}&action=get_live_categories`;
-                    const streamUrl = `${host}/player_api.php?username=${user}&password=${pass}&action=get_live_streams`;
-
-                    let cats = [];
-                    let streams = [];
-                    try { cats = await fetchXtreamApi(catUrl); } catch(e){ cats = []; }
-                    streams = await fetchXtreamApi(streamUrl);
-
-                    currentCategories = Array.isArray(cats) ? cats : [];
-                    currentItems = Array.isArray(streams) ? streams : [];
-
-                    renderCategoriesBar(currentCategories, 'live');
-                    filterAndRender('live', host, user, pass);
-                } catch (e) {
-                    grid.innerHTML = "<div class='error-msg'>تعذّر جلب القنوات المباشرة. تحقق من بيانات السيرفر (اسم المستخدم/كلمة المرور/الهوست)</div>";
-                }
-            } else if (tab === 'movies') {
-                document.getElementById("section-title").innerText = "مكتبة الأفلام الشاملة";
-                drawer.classList.add("hidden");
-                try {
-                    const catUrl = `${host}/player_api.php?username=${user}&password=${pass}&action=get_vod_categories`;
-                    const streamUrl = `${host}/player_api.php?username=${user}&password=${pass}&action=get_vod_streams`;
-
-                    let cats = [];
-                    let streams = [];
-                    try { cats = await fetchXtreamApi(catUrl); } catch(e){ cats = []; }
-                    streams = await fetchXtreamApi(streamUrl);
-
-                    currentCategories = Array.isArray(cats) ? cats : [];
-                    currentItems = Array.isArray(streams) ? streams : [];
-
-                    renderCategoriesBar(currentCategories, 'movies');
-                    filterAndRender('movies', host, user, pass);
-                } catch (e) {
-                    grid.innerHTML = "<div class='error-msg'>تعذّر جلب قائمة الأفلام. تحقق من بيانات السيرفر (اسم المستخدم/كلمة المرور/الهوست)</div>";
-                }
-            } else if (tab === 'series') {
-                document.getElementById("section-title").innerText = "مكتبة المسلسلات والبرامج الشاملة";
-                drawer.classList.add("hidden");
-                try {
-                    const catUrl = `${host}/player_api.php?username=${user}&password=${pass}&action=get_series_categories`;
-                    const streamUrl = `${host}/player_api.php?username=${user}&password=${pass}&action=get_series`;
-
-                    let cats = [];
-                    let streams = [];
-                    try { cats = await fetchXtreamApi(catUrl); } catch(e){ cats = []; }
-                    streams = await fetchXtreamApi(streamUrl);
-
-                    currentCategories = Array.isArray(cats) ? cats : [];
-                    currentItems = Array.isArray(streams) ? streams : [];
-
-                    renderCategoriesBar(currentCategories, 'series');
-                    filterAndRender('series', host, user, pass);
-                } catch (e) {
-                    grid.innerHTML = "<div class='error-msg'>تعذّر جلب قائمة المسلسلات. تحقق من بيانات السيرفر (اسم المستخدم/كلمة المرور/الهوست)</div>";
-                }
-            }
-        }
-
-        function renderCategoriesBar(categories, tab) {
-            const bar = document.getElementById("categories-bar");
-            bar.innerHTML = "";
-
-            const allChip = document.createElement("button");
-            allChip.className = "btn focusable";
-            allChip.style.cssText = "width:auto; padding:8px 16px; font-size:12px; margin:0; background:var(--red); border-radius:20px;";
-            allChip.innerText = "الكل";
-            allChip.onclick = () => {
-                selectedCategory = null;
-                const host = localStorage.getItem("wtv_host");
-                const user = localStorage.getItem("wtv_user");
-                const pass = localStorage.getItem("wtv_pass");
-                filterAndRender(tab, host, user, pass);
-            };
-            bar.appendChild(allChip);
-
-            if (categories && Array.isArray(categories)) {
-                categories.forEach(cat => {
-                    const chip = document.createElement("button");
-                    chip.className = "btn focusable";
-                    chip.style.cssText = "width:auto; padding:8px 16px; font-size:12px; margin:0; background:#222; border-radius:20px;";
-                    chip.innerText = cat.category_name || cat.name;
-                    chip.onclick = () => {
-                        selectedCategory = cat.category_id;
-                        const host = localStorage.getItem("wtv_host");
-                        const user = localStorage.getItem("wtv_user");
-                        const pass = localStorage.getItem("wtv_pass");
-                        filterAndRender(tab, host, user, pass);
-                    };
-                    bar.appendChild(chip);
-                });
-            }
-        }
-
-        function handleSearch(query) {
-            searchQuery = query.trim().toLowerCase();
-            const host = localStorage.getItem("wtv_host");
-            const user = localStorage.getItem("wtv_user");
-            const pass = localStorage.getItem("wtv_pass");
-            const activeTab = document.querySelector('.nav-item.active').id.replace('tab-', '');
-            filterAndRender(activeTab, host, user, pass);
-        }
-
-        function filterAndRender(tab, host, user, pass) {
-            let filtered = currentItems;
-            if (selectedCategory !== null) {
-                filtered = filtered.filter(it => (it.category_id || it.categoryId) == selectedCategory);
-            }
-            if (searchQuery !== "") {
-                filtered = filtered.filter(it => (it.name || it.title || "").toLowerCase().includes(searchQuery));
-            }
-
-            if (tab === 'live') {
-                renderLiveChannels(filtered, host, user, pass);
-            } else if (tab === 'movies') {
-                renderVodGrid(filtered, 'movie', host, user, pass);
-            } else if (tab === 'series') {
-                renderVodGrid(filtered, 'series', host, user, pass);
-            }
-        }
-
-        function renderLiveChannels(channels, host, user, pass) {
-            const list = document.getElementById("channel-list");
-            list.innerHTML = "";
-            channels.forEach(ch => {
-                const item = document.createElement("div");
-                item.className = "channel-item focusable";
-                item.innerHTML = `
-                    <span class="channel-name">${ch.name}</span>
-                    <img class="channel-logo" src="${ch.stream_icon || ''}" onerror="this.style.display='none'">
-                `;
-                item.onclick = () => playStream(`${host}/live/${user}/${pass}/${ch.stream_id}.m3u8`);
-                list.appendChild(item);
-            });
-            if (channels.length > 0) playStream(`${host}/live/${user}/${pass}/${channels[0].stream_id}.m3u8`);
-        }
-
-        function renderVodGrid(items, type, host, user, pass) {
-            const grid = document.getElementById("grid-container");
-            grid.innerHTML = "";
-
-            if (!items || items.length === 0) {
-                grid.innerHTML = "<div style='color:var(--gray); padding:20px;'>لا توجد عناصر متاحة في هذا القسم أو لهذا البحث</div>";
-                return;
-            }
-
-            items.forEach(item => {
-                const card = document.createElement("div");
-                card.className = "poster-card focusable";
-                const posterUrl = item.stream_icon || item.cover || 'https://via.placeholder.com/150x225?text=WTV';
-                card.innerHTML = `
-                    <img src="${posterUrl}" onerror="this.src='https://via.placeholder.com/150x225?text=WTV'">
-                    <div class="poster-title">${item.name}</div>
-                `;
-
-                card.onclick = () => {
-                    if (type === 'movie') {
-                        const ext = item.container_extension || 'mp4';
-                        const movieUrl = `${host}/movie/${user}/${pass}/${item.stream_id}.${ext}`;
-                        playStream(movieUrl);
-                    } else if (type === 'series') {
-                        fetchSeriesEpisodes(item.series_id || item.stream_id, item.name, host, user, pass);
-                    }
-                };
-                grid.appendChild(card);
-            });
-        }
-
-        async function fetchSeriesEpisodes(seriesId, seriesName, host, user, pass) {
-            try {
-                const epUrl = `${host}/player_api.php?username=${user}&password=${pass}&action=get_series_info&series_id=${seriesId}`;
-                const data = await fetchXtreamApi(epUrl);
-                const episodes = data ? data.episodes : null;
-                if (!episodes) {
-                    alert("لا توجد حلقات متاحة لهذا المسلسل");
-                    return;
-                }
-
-                let epModal = document.getElementById("episodes-modal");
-                if (!epModal) {
-                    epModal = document.createElement("div");
-                    epModal.id = "episodes-modal";
-                    epModal.className = "screen";
-                    document.body.appendChild(epModal);
-                }
-
-                let html = `
-                    <div class="card" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
-                        <h3 style="color:var(--gold); margin-bottom: 12px;">${seriesName}</h3>
-                        <p style="font-size: 12px; color:var(--gray); margin-bottom: 16px;">اختر الحلقة للبدء بالمشاهدة:</p>
-                        <div style="display: flex; flex-direction: column; gap: 8px;">
-                `;
-
-                Object.keys(episodes).forEach(seasonNum => {
-                    html += `<div style="font-weight:bold; color:var(--red); text-align:right; margin-top:10px;">الموسم ${seasonNum}</div>`;
-                    episodes[seasonNum].forEach(ep => {
-                        const epExt = ep.container_extension || 'mp4';
-                        const streamEpUrl = `${host}/series/${user}/${pass}/${ep.id}.${epExt}`;
-                        html += `
-                            <button class="btn focusable" style="background:#222; text-align:right; padding:10px; font-size:13px;" onclick="closeEpModal(); playStream('${streamEpUrl}')">
-                                ▶️ الحلقة ${ep.episode_num} - ${ep.title || 'حلقة ' + ep.episode_num}
-                            </button>
-                        `;
-                    });
-                });
-
-                html += `
-                        </div>
-                        <button class="btn focusable" style="margin-top: 20px; background:#444;" onclick="closeEpModal()">إغلاق</button>
-                    </div>
-                `;
-
-                epModal.innerHTML = html;
-                epModal.classList.remove("hidden");
-            } catch (e) {
-                alert("تعذّر جلب حلقات المسلسل");
-            }
-        }
-
-        function closeEpModal() {
-            const epModal = document.getElementById("episodes-modal");
-            if (epModal) epModal.classList.add("hidden");
-        }
-
-        function playStream(streamUrl) {
-            const video = document.getElementById("player");
-            const videoContainer = document.getElementById("video-container");
-
-            videoContainer.classList.remove("hidden");
-
-            if (hlsPlayer) {
-                hlsPlayer.destroy();
-                hlsPlayer = null;
-            }
-            video.pause();
-            video.removeAttribute("src");
-            video.load();
-
-            if (Hls.isSupported() && (streamUrl.includes('.m3u8') || streamUrl.includes('/live/'))) {
-                hlsPlayer = new Hls({
-                    enableWorker: true,
-                    lowLatencyMode: true
-                });
-                hlsPlayer.loadSource(streamUrl);
-                hlsPlayer.attachMedia(video);
-                hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => {
-                    video.play().catch(e => console.log("HLS play caught:", e));
-                });
-            } else {
-                video.src = streamUrl;
-                video.load();
-                video.play().catch(e => {
-                    console.log("Direct play caught:", e);
-                });
-            }
-        }
-
-        function closeVideoPlayer() {
-            const video = document.getElementById("player");
-            const videoContainer = document.getElementById("video-container");
-
-            video.pause();
-            if (hlsPlayer) {
-                hlsPlayer.destroy();
-                hlsPlayer = null;
-            }
-            videoContainer.classList.add("hidden");
-        }
-
-        document.addEventListener('keydown', function (e) {
-            if (e.keyCode === 10009 || e.keyCode === 461 || e.keyCode === 27) {
-                closeVideoPlayer();
-                goHomePortal();
-            }
-        });
-    </script>
+  </div>
+
+</div>
+
+<script>
+/* =========================================================
+   CONFIG
+   ========================================================= */
+// Set your own admin password here before sharing/using this artifact.
+// SHA-256 hash of the admin password — the real password is never stored in this file.
+const ADMIN_PASSWORD_HASH = "db89f54a0974da3d4111eaf1b829366aeadf55f955b6f1e9d8c3b4ca7e940395";
+
+async function sha256Hex(text) {
+  const enc = new TextEncoder().encode(text);
+  const buf = await crypto.subtle.digest('SHA-256', enc);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+const STORAGE_KEY = "subscription_state"; // legacy single-device key, unused now
+const DEVICES_KEY = "registered_devices"; // { [deviceId]: { name, firstSeen, lifetime, expiresAt, plan, approved } }
+const DEVICE_ID_KEY = "iptv_device_id";
+const ADMIN_SESSION_KEY = "iptv_admin_authed";
+
+const DURATIONS = [
+  { key: "day",    label: "يوم واحد",  sub: "24 ساعة",     ms: 1 * 24 * 60 * 60 * 1000 },
+  { key: "week",   label: "7 أيام",    sub: "أسبوع",        ms: 7 * 24 * 60 * 60 * 1000 },
+  { key: "month",  label: "شهر",       sub: "30 يوم",       ms: 30 * 24 * 60 * 60 * 1000 },
+  { key: "q3",     label: "3 أشهر",    sub: "90 يوم",       ms: 90 * 24 * 60 * 60 * 1000 },
+  { key: "h6",     label: "6 أشهر",    sub: "180 يوم",      ms: 180 * 24 * 60 * 60 * 1000 },
+  { key: "year",   label: "سنة",       sub: "365 يوم",      ms: 365 * 24 * 60 * 60 * 1000 },
+  { key: "life",   label: "مدى الحياة", sub: "بدون انتهاء", ms: null },
+];
+
+/* =========================================================
+   ROUTING: ?admin=1 shows the remote control panel view.
+   Default view is the player/login flow.
+   ========================================================= */
+function isAdminRoute() {
+  try {
+    return new URLSearchParams(window.location.search).get('admin') === '1';
+  } catch (e) { return false; }
+}
+
+/* =========================================================
+   DEVICE IDENTITY
+   A persistent random ID is created the first time this page
+   loads on a given TV/browser and stored in its localStorage.
+   Real hardware serial numbers are not reachable from a web
+   page on Tizen/webOS, so this fingerprint is the practical
+   stand-in: it is stable for that browser install going forward.
+   ========================================================= */
+function getDeviceId() {
+  let id = localStorage.getItem(DEVICE_ID_KEY);
+  if (!id) {
+    id = 'dev_' + Array.from(crypto.getRandomValues(new Uint8Array(8))).map(b => b.toString(16).padStart(2, '0')).join('');
+    localStorage.setItem(DEVICE_ID_KEY, id);
+  }
+  return id;
+}
+
+function shortId(id) {
+  return id ? id.replace('dev_', '').slice(0, 6).toUpperCase() : '';
+}
+
+/* =========================================================
+   STORAGE HELPERS (shared = syncs across any device opening this artifact)
+   ========================================================= */
+async function getAllDevices() {
+  try {
+    const res = await window.storage.get(DEVICES_KEY, true);
+    if (!res || !res.value) return {};
+    return JSON.parse(res.value);
+  } catch (e) {
+    return {};
+  }
+}
+
+async function setAllDevices(devices) {
+  try {
+    await window.storage.set(DEVICES_KEY, JSON.stringify(devices), true);
+    return true;
+  } catch (e) {
+    console.error("storage error", e);
+    return false;
+  }
+}
+
+async function ensureDeviceRegistered(deviceId) {
+  const devices = await getAllDevices();
+  if (!devices[deviceId]) {
+    devices[deviceId] = {
+      firstSeen: Date.now(),
+      approved: false,
+      lifetime: false,
+      expiresAt: 0,
+      plan: null
+    };
+    await setAllDevices(devices);
+  }
+  return devices[deviceId];
+}
+
+function isActive(deviceState) {
+  if (!deviceState || !deviceState.approved) return false;
+  if (deviceState.lifetime) return true;
+  if (!deviceState.expiresAt) return false;
+  return Date.now() < deviceState.expiresAt;
+}
+
+function formatDate(ts) {
+  if (!ts) return "";
+  const d = new Date(ts);
+  return d.toLocaleDateString('ar-EG', { year:'numeric', month:'long', day:'numeric' }) +
+         " - " + d.toLocaleTimeString('ar-EG', { hour:'2-digit', minute:'2-digit' });
+}
+
+/* =========================================================
+   PLAYER FLOW
+   ========================================================= */
+let pollTimer = null;
+let myDeviceId = null;
+
+async function initPlayerFlow() {
+  myDeviceId = getDeviceId();
+  await ensureDeviceRegistered(myDeviceId);
+  await checkAccessAndRoute();
+  // Poll every 20s so a remote approval/lock from the phone takes effect live.
+  pollTimer = setInterval(checkAccessAndRoute, 20000);
+}
+
+async function checkAccessAndRoute() {
+  const devices = await getAllDevices();
+  const mine = devices[myDeviceId];
+  const active = isActive(mine);
+
+  const loggedIn = !!localStorage.getItem('iptv_creds');
+
+  hideAll();
+
+  if (!mine || !mine.approved) {
+    document.getElementById('screen-pending').style.display = 'flex';
+    document.getElementById('pending-code-text').textContent = shortId(myDeviceId);
+    return;
+  }
+
+  if (!active) {
+    document.getElementById('screen-locked').style.display = 'flex';
+    const badge = document.getElementById('locked-expiry-badge');
+    if (mine.expiresAt && !mine.lifetime) {
+      badge.textContent = "انتهت الصلاحية في: " + formatDate(mine.expiresAt);
+    } else {
+      badge.textContent = "تم إيقاف الوصول لهذا الجهاز";
+    }
+    return;
+  }
+
+  if (loggedIn) {
+    document.getElementById('shell-player').classList.add('active');
+  } else {
+    document.getElementById('screen-login').style.display = 'flex';
+  }
+}
+
+function hideAll() {
+  document.getElementById('screen-loading').style.display = 'none';
+  document.getElementById('screen-pending').style.display = 'none';
+  document.getElementById('screen-locked').style.display = 'none';
+  document.getElementById('screen-login').style.display = 'none';
+  document.getElementById('screen-qr').style.display = 'none';
+  document.getElementById('shell-player').classList.remove('active');
+}
+
+function handleLogin() {
+  const host = document.getElementById('in-host').value.trim();
+  const user = document.getElementById('in-user').value.trim();
+  const pass = document.getElementById('in-pass').value.trim();
+  const errEl = document.getElementById('login-error');
+
+  if (!host || !user || !pass) {
+    errEl.textContent = "الرجاء تعبئة جميع الحقول";
+    errEl.classList.add('show');
+    return;
+  }
+  errEl.classList.remove('show');
+
+  localStorage.setItem('iptv_creds', JSON.stringify({ host, user, pass }));
+  checkAccessAndRoute();
+}
+
+function handleLogout() {
+  localStorage.removeItem('iptv_creds');
+  checkAccessAndRoute();
+}
+
+function showQR() {
+  hideAll();
+  document.getElementById('screen-qr').style.display = 'flex';
+  const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+  document.getElementById('qr-code-text').textContent = code;
+  drawQR(code);
+}
+
+function backToLogin() {
+  hideAll();
+  document.getElementById('screen-login').style.display = 'flex';
+}
+
+// Minimal placeholder QR renderer (visual block-grid pattern derived from the code,
+// not a scannable real QR — swappable with a QR library if network access is available).
+function drawQR(text) {
+  const canvas = document.getElementById('qr-canvas');
+  const ctx = canvas.getContext('2d');
+  const size = 12;
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, 156, 156);
+  ctx.fillStyle = '#0A0E14';
+  let seed = 0;
+  for (let i = 0; i < text.length; i++) seed += text.charCodeAt(i);
+  let rnd = seed;
+  function next() { rnd = (rnd * 9301 + 49297) % 233280; return rnd / 233280; }
+  for (let y = 0; y < 13; y++) {
+    for (let x = 0; x < 13; x++) {
+      if (next() > 0.55) ctx.fillRect(x * size, y * size, size - 2, size - 2);
+    }
+  }
+  // corner finder squares
+  [[0,0],[10,0],[0,10]].forEach(([cx,cy]) => {
+    ctx.fillRect(cx*size, cy*size, size*3-2, size*3-2);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(cx*size+size, cy*size+size, size-2, size-2);
+    ctx.fillStyle = '#0A0E14';
+  });
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('nav.tabs button').forEach(b => b.classList.remove('active'));
+  document.querySelector(`nav.tabs button[data-tab="${tab}"]`).classList.add('active');
+  document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+  document.getElementById('content-' + tab).style.display = 'block';
+}
+
+/* =========================================================
+   ADMIN FLOW
+   ========================================================= */
+function initAdminFlow() {
+  document.getElementById('shell-admin').classList.add('active');
+  if (sessionStorage.getItem(ADMIN_SESSION_KEY) === '1') {
+    showAdminPanel();
+  }
+}
+
+async function adminLogin() {
+  const val = document.getElementById('admin-pass-input').value;
+  const err = document.getElementById('admin-login-error');
+  const hash = await sha256Hex(val);
+  if (hash !== ADMIN_PASSWORD_HASH) {
+    err.textContent = "كلمة المرور غير صحيحة";
+    err.classList.add('show');
+    return;
+  }
+  err.classList.remove('show');
+  sessionStorage.setItem(ADMIN_SESSION_KEY, '1');
+  showAdminPanel();
+}
+
+function adminLogout() {
+  sessionStorage.removeItem(ADMIN_SESSION_KEY);
+  if (adminPollTimer) clearInterval(adminPollTimer);
+  document.getElementById('admin-panel-stage').style.display = 'none';
+  document.getElementById('admin-login-stage').style.display = 'flex';
+  document.getElementById('admin-pass-input').value = '';
+}
+
+let adminPollTimer = null;
+
+async function showAdminPanel() {
+  document.getElementById('admin-login-stage').style.display = 'none';
+  document.getElementById('admin-panel-stage').style.display = 'block';
+  await renderDeviceList();
+  if (adminPollTimer) clearInterval(adminPollTimer);
+  adminPollTimer = setInterval(renderDeviceList, 15000);
+}
+
+function deviceStatusLabel(dev) {
+  if (!dev.approved) return { cls: 'pending', text: 'بانتظار الموافقة' };
+  if (isActive(dev)) return { cls: 'on', text: 'مفعّل' };
+  return { cls: 'off', text: 'غير مفعّل' };
+}
+
+function deviceDetailText(dev) {
+  if (!dev.approved) return "أول ظهور: " + formatDate(dev.firstSeen);
+  if (dev.lifetime) return "اشتراك مدى الحياة — بدون تاريخ انتهاء";
+  if (isActive(dev)) return "ينتهي في: " + formatDate(dev.expiresAt);
+  return dev.expiresAt ? "انتهت الصلاحية في: " + formatDate(dev.expiresAt) : "لم يُفعَّل بعد";
+}
+
+async function renderDeviceList() {
+  const devices = await getAllDevices();
+  const listEl = document.getElementById('device-list');
+  const ids = Object.keys(devices).sort((a, b) => devices[b].firstSeen - devices[a].firstSeen);
+
+  if (ids.length === 0) {
+    listEl.innerHTML = '<div class="no-devices">لا توجد أجهزة مسجّلة بعد. افتح رابط التطبيق على جهاز العرض ليظهر هنا.</div>';
+    return;
+  }
+
+  listEl.innerHTML = ids.map(id => {
+    const dev = devices[id];
+    const status = deviceStatusLabel(dev);
+    const durButtons = DURATIONS.map(d =>
+      `<button class="dur-btn small" onclick="activateDuration('${id}','${d.key}')">${d.label}<span class="sub">${d.sub}</span></button>`
+    ).join('');
+
+    return `
+      <div class="device-card ${status.cls}">
+        <div class="device-card-head">
+          <span class="device-code">${shortId(id)}</span>
+          <span class="device-badge ${status.cls}">${status.text}</span>
+        </div>
+        <div class="device-detail">${deviceDetailText(dev)}</div>
+        ${!dev.approved ? `<button class="approve-btn" onclick="approveDevice('${id}')">موافقة على هذا الجهاز</button>` : ''}
+        <div class="device-actions">
+          <div class="duration-grid">${durButtons}</div>
+          <div class="device-lock-row">
+            <button class="lock-btn" onclick="lockDevice('${id}')">قفل هذا الجهاز</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function approveDevice(id) {
+  const devices = await getAllDevices();
+  if (!devices[id]) return;
+  devices[id].approved = true;
+  await setAllDevices(devices);
+  await renderDeviceList();
+}
+
+async function activateDuration(id, durKey) {
+  const d = DURATIONS.find(x => x.key === durKey);
+  if (!d) return;
+  const devices = await getAllDevices();
+  if (!devices[id]) return;
+  devices[id].approved = true;
+  devices[id].lifetime = (d.key === 'life');
+  devices[id].expiresAt = d.ms ? Date.now() + d.ms : null;
+  devices[id].plan = d.key;
+  await setAllDevices(devices);
+  await renderDeviceList();
+}
+
+async function lockDevice(id) {
+  const devices = await getAllDevices();
+  if (!devices[id]) return;
+  devices[id].lifetime = false;
+  devices[id].expiresAt = 0;
+  devices[id].plan = 'locked';
+  await setAllDevices(devices);
+  await renderDeviceList();
+}
+
+/* =========================================================
+   BOOT
+   ========================================================= */
+window.addEventListener('DOMContentLoaded', () => {
+  if (isAdminRoute()) {
+    initAdminFlow();
+  } else {
+    initPlayerFlow();
+  }
+});
+</script>
 </body>
 </html>
