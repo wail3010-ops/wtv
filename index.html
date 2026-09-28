@@ -398,7 +398,7 @@
             </div>
 
             <div id="qr-box" class="qr-card">
-                <img id="qr-code-img" src="" alt="QR Code" style="width: 150px; height: 150px; display: block; margin: 0 auto; background:#fff;">
+                <img id="qr-code-img" src="" alt="QR Code" style="width: 140px; height: 140px; display: block; margin: 0 auto; background:#fff;">
             </div>
             <p id="qr-hint" style="font-size: 11px; color: var(--gold); margin-bottom: 10px;">📱 امسح الباركود بكاميرا جوالك للتفعيل والتجديد الفوري دون كتابة بالريموت</p>
 
@@ -588,34 +588,38 @@
             if (settingsQr) settingsQr.src = qrApiUrl;
         }
 
+        /** محرك جلب خارق يلتف على حظر المتصفحات بربط 5 بروكسيات عالية السرعة */
         async function fetchXtreamApi(url) {
-            try {
-                const res = await fetch(url);
-                if (res.ok) {
-                    const json = await res.json();
-                    if (json) return json;
-                }
-            } catch (e) {
-                console.log("Direct fetch blocked by browser CORS/HTTPS, retrying via CORS proxies...", e);
-            }
-
             const proxies = [
-                `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-                `https://corsproxy.io/?${encodeURIComponent(url)}`,
-                `https://thingproxy.freeboard.io/fetch/${url}`
+                (u) => u,
+                (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+                (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+                (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+                (u) => `https://thingproxy.freeboard.io/fetch/${u}`
             ];
 
-            for (const proxyUrl of proxies) {
+            for (const makeProxyUrl of proxies) {
                 try {
-                    const res = await fetch(proxyUrl);
+                    const targetUrl = makeProxyUrl(url);
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+                    const res = await fetch(targetUrl, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+
                     if (res.ok) {
-                        const json = await res.json();
-                        if (json) return json;
+                        const text = await res.text();
+                        if (text && text.trim().length > 0) {
+                            try {
+                                const json = JSON.parse(text);
+                                if (json) return json;
+                            } catch (e) { }
+                        }
                     }
                 } catch (e) { }
             }
 
-            throw new Error("CORS or Network Block");
+            throw new Error("Unable to fetch IPTV data");
         }
 
         function startTvSyncListener() {
@@ -827,12 +831,14 @@
                     const catUrl = `${host}/player_api.php?username=${user}&password=${pass}&action=get_live_categories`;
                     const streamUrl = `${host}/player_api.php?username=${user}&password=${pass}&action=get_live_streams`;
 
-                    const [cats, streams] = await Promise.all([
-                        fetchXtreamApi(catUrl),
-                        fetchXtreamApi(streamUrl)
-                    ]);
+                    let cats = [];
+                    let streams = [];
+                    try { cats = await fetchXtreamApi(catUrl); } catch(e){ cats = []; }
+                    streams = await fetchXtreamApi(streamUrl);
+
                     currentCategories = Array.isArray(cats) ? cats : [];
                     currentItems = Array.isArray(streams) ? streams : [];
+
                     renderCategoriesBar(currentCategories, 'live');
                     filterAndRender('live', host, user, pass);
                 } catch (e) {
@@ -845,12 +851,14 @@
                     const catUrl = `${host}/player_api.php?username=${user}&password=${pass}&action=get_vod_categories`;
                     const streamUrl = `${host}/player_api.php?username=${user}&password=${pass}&action=get_vod_streams`;
 
-                    const [cats, streams] = await Promise.all([
-                        fetchXtreamApi(catUrl),
-                        fetchXtreamApi(streamUrl)
-                    ]);
+                    let cats = [];
+                    let streams = [];
+                    try { cats = await fetchXtreamApi(catUrl); } catch(e){ cats = []; }
+                    streams = await fetchXtreamApi(streamUrl);
+
                     currentCategories = Array.isArray(cats) ? cats : [];
                     currentItems = Array.isArray(streams) ? streams : [];
+
                     renderCategoriesBar(currentCategories, 'movies');
                     filterAndRender('movies', host, user, pass);
                 } catch (e) {
@@ -863,12 +871,14 @@
                     const catUrl = `${host}/player_api.php?username=${user}&password=${pass}&action=get_series_categories`;
                     const streamUrl = `${host}/player_api.php?username=${user}&password=${pass}&action=get_series`;
 
-                    const [cats, streams] = await Promise.all([
-                        fetchXtreamApi(catUrl),
-                        fetchXtreamApi(streamUrl)
-                    ]);
+                    let cats = [];
+                    let streams = [];
+                    try { cats = await fetchXtreamApi(catUrl); } catch(e){ cats = []; }
+                    streams = await fetchXtreamApi(streamUrl);
+
                     currentCategories = Array.isArray(cats) ? cats : [];
                     currentItems = Array.isArray(streams) ? streams : [];
+
                     renderCategoriesBar(currentCategories, 'series');
                     filterAndRender('series', host, user, pass);
                 } catch (e) {
