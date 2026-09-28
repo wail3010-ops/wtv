@@ -398,7 +398,7 @@
             </div>
 
             <div id="qr-box" class="qr-card">
-                <img id="qr-code-img" src="" alt="QR Code" style="width: 140px; height: 140px; display: block; margin: 0 auto; background:#fff;">
+                <img id="qr-code-img" src="" alt="QR Code" style="width: 150px; height: 150px; display: block; margin: 0 auto; background:#fff;">
             </div>
             <p id="qr-hint" style="font-size: 11px; color: var(--gold); margin-bottom: 10px;">📱 امسح الباركود بكاميرا جوالك للتفعيل والتجديد الفوري دون كتابة بالريموت</p>
 
@@ -578,9 +578,11 @@
             document.getElementById("device-mac").innerText = currentMac;
             document.getElementById("settings-device-mac").innerText = currentMac;
 
-            const currentSiteUrl = window.location.href.split('?')[0];
-            const qrTarget = `${currentSiteUrl}?id=${currentMac}`;
-            const qrApiUrl = `https://quickchart.io/qr?size=200&text=${encodeURIComponent(qrTarget)}`;
+            let siteBase = window.location.origin + window.location.pathname;
+            if (!siteBase.endsWith('/')) siteBase += '/';
+
+            const qrTarget = `${siteBase}?id=${currentMac}`;
+            const qrApiUrl = `https://quickchart.io/qr?size=220&text=${encodeURIComponent(qrTarget)}`;
 
             const mainQr = document.getElementById("qr-code-img");
             const settingsQr = document.getElementById("settings-qr-img");
@@ -588,38 +590,62 @@
             if (settingsQr) settingsQr.src = qrApiUrl;
         }
 
-        /** محرك جلب خارق يلتف على حظر المتصفحات بربط 5 بروكسيات عالية السرعة */
+        /** محرك جلب خارق يلتف على حظر GitHub Pages والمحتوى المزدوج عبر AllOrigins المباشر */
         async function fetchXtreamApi(url) {
-            const proxies = [
-                (u) => u,
-                (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-                (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-                (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-                (u) => `https://thingproxy.freeboard.io/fetch/${u}`
-            ];
-
-            for (const makeProxyUrl of proxies) {
-                try {
-                    const targetUrl = makeProxyUrl(url);
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 8000);
-
-                    const res = await fetch(targetUrl, { signal: controller.signal });
-                    clearTimeout(timeoutId);
-
-                    if (res.ok) {
-                        const text = await res.text();
-                        if (text && text.trim().length > 0) {
-                            try {
-                                const json = JSON.parse(text);
-                                if (json) return json;
-                            } catch (e) { }
-                        }
-                    }
-                } catch (e) { }
+            // 1. محاولة جلب مباشرة أولاً
+            try {
+                const res = await fetch(url);
+                if (res.ok) {
+                    const text = await res.text();
+                    const json = JSON.parse(text);
+                    if (json) return json;
+                }
+            } catch (e) {
+                console.log("Direct fetch blocked (Mixed Content/CORS), trying proxies...", e);
             }
 
-            throw new Error("Unable to fetch IPTV data");
+            // 2. AllOrigins Proxy المباشر لأفكاك التشفير والتفاف HTTPS
+            try {
+                const aoUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                const res = await fetch(aoUrl);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.contents) {
+                        const json = JSON.parse(data.contents);
+                        if (json) return json;
+                    }
+                }
+            } catch (e) {
+                console.log("AllOrigins proxy failed, trying next...", e);
+            }
+
+            // 3. CorsProxy.io
+            try {
+                const cpUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+                const res = await fetch(cpUrl);
+                if (res.ok) {
+                    const text = await res.text();
+                    const json = JSON.parse(text);
+                    if (json) return json;
+                }
+            } catch (e) {
+                console.log("CorsProxy failed, trying next...", e);
+            }
+
+            // 4. CodeTabs Proxy
+            try {
+                const ctUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`;
+                const res = await fetch(ctUrl);
+                if (res.ok) {
+                    const text = await res.text();
+                    const json = JSON.parse(text);
+                    if (json) return json;
+                }
+            } catch (e) {
+                console.log("CodeTabs proxy failed...", e);
+            }
+
+            throw new Error("Unable to fetch IPTV data from server");
         }
 
         function startTvSyncListener() {
