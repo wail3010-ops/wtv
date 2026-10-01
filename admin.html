@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WTV Admin Panel - لوحة إشراف الهوستات السحابية</title>
+    <style>
+        :root {
+            --red: #E50914;
+            --dark-bg: #0B0B0B;
+            --surface: #181818;
+            --surface-card: #222222;
+            --gold: #FFC107;
+            --text: #FFFFFF;
+            --gray: #AAAAAA;
+            --green: #28a745;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 32px;
+            width: 100%;
+            max-width: 580px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.85);
+            border: 1px solid #333;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: 900;
+            color: var(--red);
+            margin-bottom: 6px;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: var(--gold);
+            margin-bottom: 24px;
+        }
+
+        .input-group {
+            margin: 16px 0;
+            text-align: right;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            color: var(--gray);
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            background: #111;
+            color: #fff;
+            font-size: 15px;
+            outline: none;
+            direction: ltr;
+        }
+
+        input:focus {
+            border-color: var(--gold);
+            background: #1e1e1e;
+            box-shadow: 0 0 12px rgba(255, 193, 7, 0.4);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            border: none;
+            background: var(--red);
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: 0.2s;
+        }
+
+        .btn:hover {
+            background: #ff1e27;
+            transform: scale(1.02);
+        }
+
+        .hosts-list {
+            margin-top: 24px;
+            text-align: right;
+            background: #111;
+            padding: 16px;
+            border-radius: 10px;
+            border: 1px solid #333;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .host-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #222;
+            font-size: 13px;
+            direction: ltr;
+        }
+
+        .del-btn {
+            background: #331111;
+            color: #ff6b6b;
+            border: 1px solid #552222;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .del-btn:hover {
+            background: var(--red);
+            color: #fff;
+        }
+
+        .status-msg {
+            margin-top: 14px;
+            font-size: 13px;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .success { background: rgba(40, 167, 69, 0.2); color: var(--green); border: 1px solid var(--green); }
+        .error { background: rgba(229, 9, 20, 0.2); color: #ff6b6b; border: 1px solid var(--red); }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div class="logo">WTV Admin Panel</div>
+        <div class="subtitle">🌐 لوحة نشر المزامنة السحابية للهوستات مباشرة للعملاء</div>
+
+        <div class="input-group">
+            <label for="new-host-input">أدخل رابط الهوست الجديد للعملاء:</label>
+            <input type="text" id="new-host-input" placeholder="مثال: http://my-iptv-server.com:8080">
+        </div>
+
+        <button class="btn" onclick="publishNewHost()">🚀 نشر الهوست أونلاين لجميع المشتركين فوراً</button>
+
+        <div id="status-box" class="status-msg hidden"></div>
+
+        <div class="hosts-list">
+            <h4 style="color: var(--gold); margin-bottom: 10px; direction: rtl; text-align: right;">📡 الهوستات المفعلة حالياً بالسحابة:</h4>
+            <div id="hosts-container">جاري جلب القائمة من السحابة...</div>
+        </div>
+    </div>
+
+    <script>
+        const CLOUD_SYNC_URL = "https://api.restful-api.dev/objects?name=wtv_remote_hosts";
+
+        let currentHosts = [
+            "http://paoll1w9w.site",
+            "http://ssmarco.mom:80",
+            "http://spark5.online:80",
+            "http://rexsa.org:8880"
+        ];
+
+        async function loadCloudHosts() {
+            const container = document.getElementById("hosts-container");
+            try {
+                const res = await fetch(CLOUD_SYNC_URL);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (Array.isArray(data) && data.length > 0) {
+                        const lastItem = data[data.length - 1];
+                        if (lastItem && lastItem.data && Array.isArray(lastItem.data)) {
+                            currentHosts = lastItem.data;
+                        }
+                    }
+                }
+            } catch (e) { console.log("Cloud fetch error:", e); }
+
+            renderHostsList();
+        }
+
+        function renderHostsList() {
+            const container = document.getElementById("hosts-container");
+            container.innerHTML = "";
+
+            if (!currentHosts || currentHosts.length === 0) {
+                container.innerHTML = "<div style='color:var(--gray); text-align:center;'>لا توجد هوستات مضافة حتى الآن</div>";
+                return;
+            }
+
+            currentHosts.forEach((host, idx) => {
+                const item = document.createElement("div");
+                item.className = "host-item";
+                item.innerHTML = `
+                    <span>${host}</span>
+                    <button class="del-btn" onclick="deleteHost(${idx})">حذف ✕</button>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        async function publishNewHost() {
+            const input = document.getElementById("new-host-input");
+            const statusBox = document.getElementById("status-box");
+            let rawHost = input.value.trim().replace(/\/+$/, "");
+
+            if (!rawHost) {
+                showStatus("الرجاء أدخل رابط هوست صحيح أولاً", false);
+                return;
+            }
+
+            if (!rawHost.startsWith("http://") && !rawHost.startsWith("https://")) {
+                rawHost = "http://" + rawHost;
+            }
+
+            if (!currentHosts.includes(rawHost)) {
+                currentHosts.push(rawHost);
+            }
+
+            showStatus("جاري نشر وتعميم الهوست أونلاين لجميع المشتركين...", true);
+
+            try {
+                const res = await fetch("https://api.restful-api.dev/objects", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        name: "wtv_remote_hosts",
+                        data: currentHosts
+                    })
+                });
+
+                if (res.ok) {
+                    input.value = "";
+                    showStatus("🎉 تم نشر وتعميم الهوست لجميع المشتركين أونلاين بنجاح!", true);
+                    renderHostsList();
+                } else {
+                    showStatus("تعذّر النشر، حاول مجدداً", false);
+                }
+            } catch (e) {
+                showStatus("حدث خطأ في الاتصال، تحقق من شبكتك", false);
+            }
+        }
+
+        async function deleteHost(idx) {
+            if (confirm("هل تريد حذف هذا الهوست من القائمة أونلاين؟")) {
+                currentHosts.splice(idx, 1);
+                renderHostsList();
+                showStatus("جاري حفظ التحديث بالسحابة...", true);
+
+                try {
+                    await fetch("https://api.restful-api.dev/objects", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            name: "wtv_remote_hosts",
+                            data: currentHosts
+                        })
+                    });
+                    showStatus("تم التحديث والحذف بنجاح أونلاين", true);
+                } catch(e){}
+            }
+        }
+
+        loadCloudHosts();
+    </script>
+</body>
+</html>
