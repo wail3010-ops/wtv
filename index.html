@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WTV Smart TV & Web Player</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>WTV Smart TV & Web Player v2.0</title>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
         :root {
@@ -14,7 +17,6 @@
             --gold: #FFC107;
             --text: #FFFFFF;
             --gray: #AAAAAA;
-            --green: #28a745;
         }
 
         * {
@@ -43,7 +45,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: rgba(11, 11, 11, 0.96);
+            background: rgba(11, 11, 11, 0.98);
             z-index: 10;
         }
 
@@ -54,8 +56,8 @@
             border-radius: 16px;
             padding: 28px;
             width: 90%;
-            max-width: 480px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            max-width: 540px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.85);
             border: 1px solid #333;
             text-align: center;
         }
@@ -64,7 +66,7 @@
             font-size: 36px;
             font-weight: 900;
             color: var(--red);
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             letter-spacing: 2px;
         }
 
@@ -87,25 +89,26 @@
             border: 1px solid #444;
             background: #111;
             color: #fff;
-            font-size: 15px;
+            font-size: 14px;
             outline: none;
             direction: ltr;
         }
 
         input:focus, .focusable:focus {
-            border-color: var(--gold);
-            background: #1e1e1e;
-            box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+            border-color: var(--gold) !important;
+            background: #1e1e1e !important;
+            box-shadow: 0 0 12px rgba(255, 193, 7, 0.5) !important;
+            outline: none;
         }
 
         .btn {
             width: 100%;
-            padding: 14px;
+            padding: 12px;
             border-radius: 8px;
             border: none;
             background: var(--red);
             color: #fff;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: bold;
             cursor: pointer;
             margin-top: 10px;
@@ -118,30 +121,50 @@
             outline: 2px solid var(--gold);
         }
 
-        .device-key-box {
-            background: #1e1e28;
-            padding: 16px;
-            border-radius: 8px;
-            margin: 16px 0;
-            border: 1px solid #333;
+        .btn-logout {
+            background: #332222;
+            color: #ff6b6b;
+            border: 1px solid #552222;
         }
 
-        .device-key {
-            font-size: 24px;
+        .btn-logout:hover {
+            background: #551111;
+            color: #fff;
+        }
+
+        .emergency-reset-bar {
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            z-index: 9999;
+        }
+
+        .emergency-reset-btn {
+            background: rgba(229, 9, 20, 0.9);
+            color: #ffffff;
+            border: 1px solid #ff4d4d;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
             font-weight: bold;
-            color: var(--gold);
-            letter-spacing: 2px;
-            direction: ltr;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+        }
+
+        .emergency-reset-btn:hover {
+            background: #ff1e27;
+            transform: scale(1.05);
         }
 
         #home-portal {
             display: flex;
-            gap: 24px;
+            gap: 20px;
             justify-content: center;
             align-items: center;
             width: 100%;
-            max-width: 900px;
-            padding: 20px;
+            max-width: 960px;
+            padding: 16px;
         }
 
         .portal-card {
@@ -149,7 +172,7 @@
             background: var(--surface);
             border: 1px solid #333;
             border-radius: 16px;
-            padding: 32px 16px;
+            padding: 30px 16px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -167,8 +190,8 @@
         }
 
         .portal-icon {
-            font-size: 54px;
-            margin-bottom: 16px;
+            font-size: 52px;
+            margin-bottom: 14px;
         }
 
         .portal-title {
@@ -196,27 +219,27 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding-top: 20px;
+            padding-top: 16px;
             border-left: 1px solid #222;
             z-index: 10;
         }
 
         .nav-item {
-            width: 54px;
-            height: 54px;
+            width: 52px;
+            height: 52px;
             border-radius: 12px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
             cursor: pointer;
             color: var(--gray);
             transition: 0.2s;
             font-size: 18px;
         }
 
-        .nav-item.active, .nav-item.focused {
+        .nav-item.active, .nav-item.focused, .nav-item:hover {
             background: var(--red);
             color: #fff;
             box-shadow: 0 0 12px rgba(229, 9, 20, 0.6);
@@ -237,9 +260,49 @@
             z-index: 5;
         }
 
+        .cw-row {
+            display: flex;
+            gap: 14px;
+            overflow-x: auto;
+            padding-bottom: 12px;
+            margin-bottom: 24px;
+        }
+
+        .cw-card {
+            min-width: 130px;
+            max-width: 130px;
+            background: var(--surface-card);
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .cw-card:hover, .cw-card.focused {
+            outline: 3px solid var(--gold);
+            transform: scale(1.04);
+        }
+
+        .cw-poster {
+            width: 100%;
+            aspect-ratio: 2/3;
+            object-fit: cover;
+        }
+
+        .cw-bar-container {
+            width: 100%;
+            height: 4px;
+            background: #333;
+        }
+
+        .cw-bar-fill {
+            height: 100%;
+            background: var(--red);
+        }
+
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
             gap: 16px;
             padding-bottom: 40px;
         }
@@ -285,7 +348,7 @@
             position: absolute;
             top: 0;
             right: 0;
-            width: 340px;
+            width: 320px;
             height: 100%;
             background: rgba(18, 18, 18, 0.95);
             backdrop-filter: blur(10px);
@@ -347,6 +410,22 @@
             object-fit: contain;
         }
 
+        .channel-title-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 110;
+            background: rgba(0, 0, 0, 0.75);
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 15px;
+            border-right: 4px solid var(--red);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            backdrop-filter: blur(6px);
+        }
+
         .close-btn {
             position: absolute;
             top: 20px;
@@ -368,186 +447,175 @@
             transform: scale(1.05);
         }
 
-        .error-msg {
-            color: #ff4d4d;
-            font-size: 13px;
-            margin-top: 8px;
+        .modal-details {
+            display: flex;
+            gap: 20px;
+            text-align: right;
+            align-items: flex-start;
         }
 
-        .qr-card {
-            margin: 10px 0;
-            background: #ffffff;
-            padding: 12px;
-            border-radius: 12px;
-            display: inline-block;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+        .modal-poster {
+            width: 150px;
+            aspect-ratio: 2/3;
+            border-radius: 10px;
+            object-fit: cover;
+            border: 1px solid #444;
+        }
+
+        .modal-info {
+            flex: 1;
         }
     </style>
 </head>
 <body>
 
-    <!-- 1. شاشة التفعيل والربط المباشر ببيانات Xtream من الجوال -->
-    <div id="activation-screen" class="screen">
-        <div class="card" style="max-height: 90vh; overflow-y: auto;">
-            <div class="logo">WTV Smart TV</div>
-            <h2 id="activation-title">🔐 تفعيل اشتراك الشاشة</h2>
-
-            <div class="device-key-box" style="margin-bottom: 10px; padding: 10px;">
-                <div style="font-size: 11px; color: var(--gray);">رقم شاشتك (Device Key):</div>
-                <div id="device-mac" class="device-key" style="font-size: 20px;">8492-3105</div>
-            </div>
-
-            <div id="qr-box" class="qr-card">
-                <img id="qr-code-img" src="" alt="QR Code" style="width: 150px; height: 150px; display: block; margin: 0 auto; background:#fff;">
-            </div>
-            <p id="qr-hint" style="font-size: 11px; color: var(--gold); margin-bottom: 10px;">📱 امسح الباركود بكاميرا جوالك للتفعيل والتجديد الفوري دون كتابة بالريموت</p>
-
-            <div class="input-group">
-                <label for="activation-code-input">كود التفعيل (6 أرقام):</label>
-                <input type="text" id="activation-code-input" class="focusable" placeholder="أدخل كود التفعيل" maxlength="6">
-            </div>
-
-            <div id="mobile-xtream-box" class="hidden">
-                <hr style="border-color:#333; margin: 12px 0;">
-                <p style="font-size:12px; color:var(--gold); font-weight:bold; margin-bottom:8px;">بيانات سيرفر IPTV (Xtream):</p>
-                <div class="input-group">
-                    <label for="mobile-host-input">عنوان السيرفر / الهوست (Server URL):</label>
-                    <input type="text" id="mobile-host-input" class="focusable" placeholder="http://host.com:8080">
-                </div>
-
-                <div class="input-group">
-                    <label for="mobile-user-input">اسم المستخدم (Username):</label>
-                    <input type="text" id="mobile-user-input" class="focusable" placeholder="Username">
-                </div>
-
-                <div class="input-group">
-                    <label for="mobile-pass-input">كلمة المرور (Password):</label>
-                    <input type="password" id="mobile-pass-input" class="focusable" placeholder="Password">
-                </div>
-            </div>
-
-            <button id="activate-btn" class="btn focusable" onclick="handleActivation()">تفعيل الشاشة الآن</button>
-            <div id="activation-error" class="error-msg hidden">كود التفعيل غير صحيح</div>
-        </div>
+    <div class="emergency-reset-bar">
+        <button class="emergency-reset-btn focusable" tabindex="0" onclick="forceEmergencyReset()">🧹 مسح الكاش وتسجيل الخروج</button>
     </div>
 
-    <!-- 2. شاشة دخول وإعدادات بيانات Xtream -->
-    <div id="login-screen" class="screen hidden">
+    <!-- 1. شاشة دخول وإعدادات بيانات IPTV Xtream المباشرة المبسطة -->
+    <div id="login-screen" class="screen">
         <div class="card">
-            <div class="logo">WTV Player</div>
-            <h3 style="margin-bottom: 12px;">⚙️ إعدادات سيرفر IPTV (Xtream)</h3>
-
-            <div class="device-key-box" style="margin-bottom: 10px; padding: 10px;">
-                <div style="font-size: 11px; color: var(--gray);">رقم الشاشة (Device Key):</div>
-                <div id="settings-device-mac" class="device-key" style="font-size: 18px;">8492-3105</div>
-            </div>
-
-            <div class="qr-card" style="padding:8px;">
-                <img id="settings-qr-img" src="" alt="QR Code" style="width: 120px; height: 120px; display: block; margin: 0 auto; background:#fff;">
-            </div>
+            <div class="logo">WTV Smart Player</div>
+            <p style="font-size: 13px; color: var(--gray); margin-bottom: 18px;">أدخل بيانات سيرفر IPTV (Xtream) للبدء بالمشاهدة المباشرة:</p>
 
             <div class="input-group">
                 <label for="host-input">عنوان السيرفر / الهوست (Server URL):</label>
-                <input type="text" id="host-input" class="focusable" placeholder="http://host.com:8080">
+                <input type="text" id="host-input" class="focusable" tabindex="0" placeholder="مثال: http://host.com:8080">
             </div>
 
             <div class="input-group">
                 <label for="user-input">اسم المستخدم (Username):</label>
-                <input type="text" id="user-input" class="focusable" placeholder="Username">
+                <input type="text" id="user-input" class="focusable" tabindex="0" placeholder="اسم المستخدم الخاص باشتراكك">
             </div>
 
             <div class="input-group">
                 <label for="pass-input">كلمة المرور (Password):</label>
-                <input type="password" id="pass-input" class="focusable" placeholder="Password">
+                <input type="password" id="pass-input" class="focusable" tabindex="0" placeholder="كلمة المرور الخاصة باشتراكك">
             </div>
 
-            <button class="btn focusable" onclick="handleLogin()">حفظ وتحديث بيانات السيرفر</button>
-            <button class="btn focusable" style="background:#333; margin-top:8px;" onclick="closeLoginScreen()">إغلاق الإعدادات</button>
-            <div id="login-error" class="error-msg hidden">تعذّر الاتصال بالسيرفر. تحقق من البيانات</div>
+            <button class="btn focusable" tabindex="0" onclick="handleLogin()">🚀 حفظ والاتصال بالسيرفر الآن</button>
+            <button class="btn btn-logout focusable" tabindex="0" style="margin-top: 10px;" onclick="logoutAndClearCredentials()">🚪 تسجيل الخروج ومسح البيانات المحفوظة</button>
+            <div id="login-error" class="error-msg hidden">الرجاء تعبئة كافة حقول السيرفر بالكامل</div>
         </div>
     </div>
 
-    <!-- 3. الصفحة الرئيسية الشاملة (Portal Home Screen) -->
+    <!-- 2. الصفحة الرئيسية الشاملة (Portal Home Screen) -->
     <div id="portal-screen" class="screen hidden">
-        <div class="logo" style="margin-bottom: 24px;">WTV Smart TV</div>
-        <h2 style="margin-bottom: 32px; font-weight: bold;">اختر القسم للبدء للمشاهدة:</h2>
+        <div class="logo" style="margin-bottom: 6px;">WTV Smart Player</div>
+        <p id="portal-account-info" style="font-size:12px; color:var(--gold); margin-bottom: 20px;">السيرفر الحالي: ...</p>
 
         <div id="home-portal">
-            <div class="portal-card focusable" onclick="enterSection('live')">
+            <div class="portal-card focusable" tabindex="0" onclick="enterSection('live')">
                 <div class="portal-icon">📺</div>
                 <div class="portal-title">البث المباشر</div>
                 <div class="portal-sub">جميع القنوات المباشرة والرياضية</div>
             </div>
 
-            <div class="portal-card focusable" onclick="enterSection('movies')">
+            <div class="portal-card focusable" tabindex="0" onclick="enterSection('movies')">
                 <div class="portal-icon">🎬</div>
                 <div class="portal-title">مكتبة الأفلام</div>
                 <div class="portal-sub">أحدث الأفلام العربية والأجنبية</div>
             </div>
 
-            <div class="portal-card focusable" onclick="enterSection('series')">
+            <div class="portal-card focusable" tabindex="0" onclick="enterSection('series')">
                 <div class="portal-icon">🍿</div>
                 <div class="portal-title">المسلسلات والبرامج</div>
                 <div class="portal-sub">أحدث المسلسلات والمواسم</div>
             </div>
         </div>
 
-        <button class="btn focusable" style="width: auto; padding: 10px 24px; margin-top: 32px; background: #333;" onclick="openCredentials()">⚙️ تعديل بيانات السيرفر</button>
+        <div style="display: flex; gap: 12px; margin-top: 24px; justify-content: center;">
+            <button class="btn focusable" tabindex="0" style="width: auto; padding: 10px 24px; background: #333;" onclick="openCredentials()">⚙️ تعديل بيانات السيرفر</button>
+            <button class="btn btn-logout focusable" tabindex="0" style="width: auto; padding: 10px 24px;" onclick="logoutAndClearCredentials()">🚪 تسجيل الخروج / تغيير الحساب</button>
+        </div>
     </div>
 
-    <!-- 4. المشغل الداخلي -->
+    <!-- 3. المشغل الداخلي والشبكة الرئيسية -->
     <div id="app-layout" class="hidden">
         <div id="video-container" class="hidden">
-            <button id="close-video-btn" class="close-btn" onclick="closeVideoPlayer()">✕ إغلاق الفيديو والرجوع</button>
+            <div id="channel-title-overlay" class="channel-title-overlay hidden">🔴 بث مباشر</div>
+            <button id="close-video-btn" class="close-btn focusable" tabindex="0" onclick="closeVideoPlayer()">✕ إغلاق الفيديو والرجوع</button>
             <video id="player" controls crossorigin></video>
         </div>
 
         <div id="sidebar">
-            <div id="tab-home" class="nav-item active focusable" onclick="goHomePortal()">
+            <div id="tab-home" class="nav-item active focusable" tabindex="0" onclick="goHomePortal()">
                 🏠<span class="nav-label">الرئيسية</span>
             </div>
-            <div id="tab-live" class="nav-item focusable" onclick="enterSection('live')">
+            <div id="tab-live" class="nav-item focusable" tabindex="0" onclick="enterSection('live')">
                 📺<span class="nav-label">مباشر</span>
             </div>
-            <div id="tab-movies" class="nav-item focusable" onclick="enterSection('movies')">
+            <div id="tab-movies" class="nav-item focusable" tabindex="0" onclick="enterSection('movies')">
                 🎬<span class="nav-label">أفلام</span>
             </div>
-            <div id="tab-series" class="nav-item focusable" onclick="enterSection('series')">
+            <div id="tab-series" class="nav-item focusable" tabindex="0" onclick="enterSection('series')">
                 🍿<span class="nav-label">مسلسلات</span>
             </div>
-            <div id="tab-settings" class="nav-item focusable" onclick="openCredentials()">
+            <div id="tab-fav" class="nav-item focusable" tabindex="0" onclick="enterSection('favorites')">
+                ❤️<span class="nav-label">قائمتي</span>
+            </div>
+            <div id="tab-refresh" class="nav-item focusable" tabindex="0" onclick="refreshCurrentSection()">
+                🔄<span class="nav-label">تحديث</span>
+            </div>
+            <div id="tab-settings" class="nav-item focusable" tabindex="0" onclick="openCredentials()">
                 ⚙️<span class="nav-label">السيرفر</span>
+            </div>
+            <div id="tab-logout" class="nav-item focusable" tabindex="0" style="margin-top: auto; color: #ff6b6b;" onclick="logoutAndClearCredentials()">
+                🚪<span class="nav-label">خروج</span>
             </div>
         </div>
 
         <div id="content">
-            <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap;">
-                <h2 id="section-title" style="color: var(--gold); margin-left: auto;">البث المباشر والقنوات</h2>
-                <input type="text" id="search-input" class="focusable" aria-label="البحث" placeholder="🔍 ابحث عن قناة، فيلم، أو مسلسل..." oninput="handleSearch(this.value)" style="width: 280px; padding: 10px; font-size: 13px;">
+            <!-- شريط آخر ما تم مشاهدته (Continue Watching Row) -->
+            <div id="cw-section" class="hidden">
+                <h3 style="color: var(--gold); margin-bottom: 10px; font-size: 16px;">🍿 آخر ما تم مشاهدته:</h3>
+                <div id="cw-row" class="cw-row"></div>
             </div>
 
-            <!-- شريط الأقسام والتصنيفات الأفقية -->
-            <div id="categories-bar" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 16px; white-space: nowrap;"></div>
+            <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap;">
+                <h2 id="section-title" style="color: var(--gold); margin-left: auto;">البث المباشر والقنوات</h2>
+                <button class="btn focusable" tabindex="0" style="width: auto; padding: 8px 16px; margin: 0; background: #222; font-size: 12px;" onclick="refreshCurrentSection()">🔄 تحديث المحتوى</button>
+                <input type="text" id="search-input" class="focusable" tabindex="0" aria-label="البحث" placeholder="🔍 ابحث عن قناة، فيلم، أو مسلسل..." oninput="handleSearch(this.value)" style="width: 260px; padding: 10px; font-size: 13px;">
+            </div>
 
+            <div id="categories-bar" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 16px; white-space: nowrap;"></div>
             <div id="grid-container" class="grid"></div>
         </div>
 
+        <!-- قائمة القنوات المباشرة مع زر خروج مخصص صريح -->
         <div id="live-drawer" class="hidden">
-            <h3 style="margin-bottom: 12px; color: var(--gold);">قنوات البث المباشر</h3>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <h3 style="color: var(--gold); margin:0;">قنوات البث المباشر</h3>
+                <button class="btn focusable" tabindex="0" style="width:auto; padding:6px 14px; margin:0; background:#333; font-size:12px;" onclick="document.getElementById('live-drawer').classList.add('hidden')">✕ إغلاق القنوات</button>
+            </div>
             <div id="channel-list" style="overflow-y: auto; flex: 1;"></div>
         </div>
     </div>
 
-    <script>
-        const MASTER_PIN = "wail147258";
-        let isActivated = localStorage.getItem("wtv_web_activated") === "true";
-        let hlsPlayer = null;
-        let syncInterval = null;
+    <!-- 4. شاشة التفاصيل الفاخرة Modal Dialog -->
+    <div id="details-modal" class="screen hidden" onclick="if(event.target===this) closeDetailsModal();">
+        <div class="card" style="max-width: 650px;" onclick="event.stopPropagation();">
+            <div id="details-content"></div>
+        </div>
+    </div>
 
+    <script>
+        let hlsPlayer = null;
         let currentItems = [];
         let currentCategories = [];
         let selectedCategory = null;
         let searchQuery = "";
+        let activeTabName = "live";
+        let activePlayingMedia = null;
+
+        function forceEmergencyReset() {
+            if (confirm("هل أنت تأكدت من رغبتك في مسح الكاش وتسجيل الخروج؟")) {
+                localStorage.clear();
+                sessionStorage.clear();
+                window.location.href = window.location.pathname + '?reset=' + Date.now();
+            }
+        }
 
         function cleanHostUrl(raw) {
             if (!raw) return "";
@@ -558,240 +626,193 @@
             return h;
         }
 
-        function getDeviceMac() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const urlMac = urlParams.get('id');
-            if (urlMac) return urlMac;
-
-            let mac = localStorage.getItem("wtv_web_mac");
-            if (!mac) {
-                const rand1 = Math.floor(1000 + Math.random() * 9000);
-                const rand2 = Math.floor(1000 + Math.random() * 9000);
-                mac = `${rand1}-${rand2}`;
-                localStorage.setItem("wtv_web_mac", mac);
+        function ensureArray(data) {
+            if (!data) return [];
+            if (Array.isArray(data)) return data;
+            if (typeof data === 'object') {
+                if (data.series && Array.isArray(data.series)) return data.series;
+                if (data.data && Array.isArray(data.data)) return data.data;
+                if (data.channels && Array.isArray(data.channels)) return data.channels;
+                return Object.values(data).filter(it => it && typeof it === 'object');
             }
-            return mac;
+            return [];
         }
 
-        function updateQrCodes() {
-            const currentMac = getDeviceMac();
-            document.getElementById("device-mac").innerText = currentMac;
-            document.getElementById("settings-device-mac").innerText = currentMac;
-
-            let siteBase = window.location.origin + window.location.pathname;
-            if (!siteBase.endsWith('/')) siteBase += '/';
-
-            const qrTarget = `${siteBase}?id=${currentMac}`;
-            const qrApiUrl = `https://quickchart.io/qr?size=220&text=${encodeURIComponent(qrTarget)}`;
-
-            const mainQr = document.getElementById("qr-code-img");
-            const settingsQr = document.getElementById("settings-qr-img");
-            if (mainQr) mainQr.src = qrApiUrl;
-            if (settingsQr) settingsQr.src = qrApiUrl;
-        }
-
-        /** محرك جلب خارق يلتف على حظر GitHub Pages والمحتوى المزدوج عبر AllOrigins المباشر */
+        /** محرك سباق متوازي خارق مع بروكسي مخصص عالي الثبات */
         async function fetchXtreamApi(url) {
-            // 1. محاولة جلب مباشرة أولاً
-            try {
-                const res = await fetch(url);
-                if (res.ok) {
-                    const text = await res.text();
-                    const json = JSON.parse(text);
-                    if (json) return json;
-                }
-            } catch (e) {
-                console.log("Direct fetch blocked (Mixed Content/CORS), trying proxies...", e);
-            }
+            const fetchSingleProxy = async (targetUrl, isAllOrigins) => {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 25000); // 20-25s for large playlists
 
-            // 2. AllOrigins Proxy المباشر لأفكاك التشفير والتفاف HTTPS
-            try {
-                const aoUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-                const res = await fetch(aoUrl);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data && data.contents) {
-                        const json = JSON.parse(data.contents);
-                        if (json) return json;
+                try {
+                    const res = await fetch(targetUrl, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    if (!res.ok) throw new Error("HTTP " + res.status);
+
+                    if (isAllOrigins) {
+                        const data = await res.json();
+                        if (data && data.contents) {
+                            try {
+                                const parsed = JSON.parse(data.contents);
+                                if (parsed) return parsed;
+                            } catch (e) {
+                                if (data.contents && data.contents.length > 5) return data.contents;
+                            }
+                        }
+                    } else {
+                        const text = await res.text();
+                        if (text && text.trim().length > 0) {
+                            try {
+                                const parsed = JSON.parse(text);
+                                if (parsed) return parsed;
+                            } catch (e) { }
+                        }
                     }
+                } catch (e) {
+                    clearTimeout(timeoutId);
+                    throw e;
                 }
-            } catch (e) {
-                console.log("AllOrigins proxy failed, trying next...", e);
+                throw new Error("Invalid format");
+            };
+
+            const proxyFetchers = [
+                fetchSingleProxy(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, true),
+                fetchSingleProxy(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, false),
+                fetchSingleProxy(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, false),
+                fetchSingleProxy(`https://corsproxy.io/?${encodeURIComponent(url)}`, false),
+                fetchSingleProxy(url, false)
+            ];
+
+            if (Promise.any) {
+                try {
+                    return await Promise.any(proxyFetchers);
+                } catch (e) { }
             }
 
-            // 3. CorsProxy.io
-            try {
-                const cpUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-                const res = await fetch(cpUrl);
-                if (res.ok) {
-                    const text = await res.text();
-                    const json = JSON.parse(text);
-                    if (json) return json;
-                }
-            } catch (e) {
-                console.log("CorsProxy failed, trying next...", e);
-            }
-
-            // 4. CodeTabs Proxy
-            try {
-                const ctUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`;
-                const res = await fetch(ctUrl);
-                if (res.ok) {
-                    const text = await res.text();
-                    const json = JSON.parse(text);
-                    if (json) return json;
-                }
-            } catch (e) {
-                console.log("CodeTabs proxy failed...", e);
+            for (const p of proxyFetchers) {
+                try { return await p; } catch(e){}
             }
 
             throw new Error("Unable to fetch IPTV data from server");
         }
 
-        function startTvSyncListener() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const isMobilePairPage = urlParams.has('id');
-
-            if (isMobilePairPage) {
-                document.getElementById("qr-box").style.display = "none";
-                document.getElementById("qr-hint").style.display = "none";
-                document.getElementById("mobile-xtream-box").classList.remove("hidden");
-                document.getElementById("activation-title").innerText = "📱 ربط وتفعيل التلفزيون من الجوال";
-                document.getElementById("activate-btn").innerText = "🚀 ربط وتفعيل سيرفر IPTV على الشاشة الآن";
-                document.getElementById("activate-btn").style.background = "#28a745";
-                return;
-            }
-
-            const mac = getDeviceMac();
-            if (syncInterval) clearInterval(syncInterval);
-
-            syncInterval = setInterval(async () => {
-                try {
-                    const res = await fetch(`https://api.jsonstorage.net/v1/json/wtv_${mac}`);
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data && data.activated && data.host) {
-                            applyPairedCredentials(data);
-                            return;
-                        }
-                    }
-                } catch (e) { }
-
-                try {
-                    const res = await fetch(`https://api.restful-api.dev/objects?name=wtv_pair_${mac}`);
-                    if (res.ok) {
-                        const list = await res.json();
-                        if (list && list.length > 0) {
-                            const lastPair = list[list.length - 1];
-                            const data = lastPair.data;
-                            if (data && data.activated && data.host) {
-                                applyPairedCredentials(data);
-                                return;
-                            }
-                        }
-                    }
-                } catch (e) { }
-            }, 1500);
+        /* ---------------- المفضلة وحفظ متابعة المشاهدة ---------------- */
+        function getFavorites() {
+            return JSON.parse(localStorage.getItem("wtv_favorites") || "[]");
         }
 
-        function applyPairedCredentials(data) {
-            localStorage.setItem("wtv_host", cleanHostUrl(data.host));
-            localStorage.setItem("wtv_user", data.user ? data.user.trim() : "");
-            localStorage.setItem("wtv_pass", data.pass ? data.pass.trim() : "");
-            localStorage.setItem("wtv_web_activated", "true");
-            if (syncInterval) clearInterval(syncInterval);
-
-            document.getElementById("activation-screen").classList.add("hidden");
-            document.getElementById("login-screen").classList.add("hidden");
-            goHomePortal();
+        function isFavorite(id) {
+            return getFavorites().some(it => it.id == id);
         }
 
-        async function handleMobilePairing() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const targetMac = urlParams.get('id');
-            const host = cleanHostUrl(document.getElementById("mobile-host-input").value || document.getElementById("host-input").value);
-            const user = (document.getElementById("mobile-user-input").value || document.getElementById("user-input").value).trim();
-            const pass = (document.getElementById("mobile-pass-input").value || document.getElementById("pass-input").value).trim();
-            const code = document.getElementById("activation-code-input").value.trim();
-
-            if (!host || !user || !pass) {
-                alert("الرجاء أدخل رابط الهوست، اسم المستخدم، وكلمة المرور للسيرفر");
-                return;
-            }
-
-            if (targetMac) {
-                const payload = {
-                    activated: true,
-                    host: host,
-                    user: user,
-                    pass: pass,
-                    code: code || "999999",
-                    updatedAt: Date.now()
-                };
-
-                try {
-                    await fetch(`https://api.jsonstorage.net/v1/json/wtv_${targetMac}?apiKey=public`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                } catch(e){}
-
-                try {
-                    await fetch(`https://api.restful-api.dev/objects`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name: `wtv_pair_${targetMac}`, data: payload })
-                    });
-                } catch(e){}
-
-                alert("🎉 تم إرسال سيرفر IPTV والتفعيل لتلفزيونك بنجاح! انظر لشاشة التلفزيون الآن.");
-            }
-        }
-
-        updateQrCodes();
-        startTvSyncListener();
-
-        if (isActivated) {
-            document.getElementById("activation-screen").classList.add("hidden");
-            checkSavedCredentials();
-        }
-
-        function handleActivation() {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('id')) {
-                handleMobilePairing();
-                return;
-            }
-
-            const code = document.getElementById("activation-code-input").value.trim();
-            if (code === MASTER_PIN || code === "999999" || code.length === 6) {
-                localStorage.setItem("wtv_web_activated", "true");
-                document.getElementById("activation-screen").classList.add("hidden");
-                checkSavedCredentials();
+        function toggleFavorite(item, type) {
+            let favs = getFavorites();
+            if (isFavorite(item.stream_id || item.series_id || item.id)) {
+                favs = favs.filter(it => (it.id) != (item.stream_id || item.series_id || item.id));
+                alert("تمت الإزالة من قائمتي ❤️");
             } else {
-                document.getElementById("activation-error").classList.remove("hidden");
+                favs.unshift({
+                    id: item.stream_id || item.series_id || item.id,
+                    name: item.name || item.title,
+                    poster: item.stream_icon || item.cover,
+                    type: type
+                });
+                alert("تمت الإضافة إلى قائمتي ❤️");
             }
+            localStorage.setItem("wtv_favorites", JSON.stringify(favs));
+            if (activeTabName === 'favorites') enterSection('favorites');
         }
 
+        function getContinueWatching() {
+            return JSON.parse(localStorage.getItem("wtv_cw") || "[]");
+        }
+
+        /* استبعاد القنوات المباشرة تماماً من متابعة المشاهدة وحفظ الأفلام والمسلسلات فقط */
+        function saveProgress(media, posMs, durMs) {
+            if (!media || media.isLive || !durMs || posMs < 5000) return;
+            let cw = getContinueWatching().filter(it => it.id !== media.id);
+            cw.unshift({
+                id: media.id,
+                title: media.title,
+                poster: media.poster,
+                streamUrl: media.streamUrl,
+                posMs: posMs,
+                durMs: durMs,
+                updatedAt: Date.now()
+            });
+            if (cw.length > 15) cw.pop();
+            localStorage.setItem("wtv_cw", JSON.stringify(cw));
+            renderContinueWatchingRow();
+        }
+
+        function renderContinueWatchingRow() {
+            const cwList = getContinueWatching();
+            const section = document.getElementById("cw-section");
+            const row = document.getElementById("cw-row");
+
+            if (!cwList || cwList.length === 0) {
+                section.classList.add("hidden");
+                return;
+            }
+
+            section.classList.remove("hidden");
+            row.innerHTML = "";
+
+            cwList.forEach(item => {
+                const pct = ((item.posMs / item.durMs) * 100).toFixed(0);
+                const card = document.createElement("div");
+                card.className = "cw-card focusable";
+                card.tabIndex = 0;
+                card.innerHTML = `
+                    <img class="cw-poster" src="${item.poster || 'https://via.placeholder.com/130x195?text=WTV'}" onerror="this.src='https://via.placeholder.com/130x195?text=WTV'">
+                    <div class="cw-bar-container"><div class="cw-bar-fill" style="width:${pct}%"></div></div>
+                    <div style="padding:6px; font-size:11px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.title}</div>
+                `;
+                card.onclick = () => {
+                    playStream(item.streamUrl, item.posMs, { id: item.id, title: item.title, poster: item.poster, streamUrl: item.streamUrl, isLive: false }, true);
+                };
+                row.appendChild(card);
+            });
+        }
+
+        /* ---------------- الدخول وتفاصيل الحساب ---------------- */
         function checkSavedCredentials() {
             const host = localStorage.getItem("wtv_host");
             const user = localStorage.getItem("wtv_user");
             const pass = localStorage.getItem("wtv_pass");
+
             if (host && user && pass) {
+                document.getElementById("host-input").value = host;
+                document.getElementById("user-input").value = user;
+                document.getElementById("pass-input").value = pass;
+
+                const portalInfo = document.getElementById("portal-account-info");
+                if (portalInfo) portalInfo.innerText = `السيرفر الحالي: ${host} | المستخدم: ${user}`;
+
+                document.getElementById("login-screen").classList.add("hidden");
                 goHomePortal();
             } else {
                 document.getElementById("login-screen").classList.remove("hidden");
             }
         }
 
-        function handleLogin() {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('id')) {
-                handleMobilePairing();
-                return;
-            }
+        function logoutAndClearCredentials() {
+            if (confirm("هل أنت تأكدت من رغبتك في تسجيل الخروج ومسح بيانات السيرفر المحفوظة؟")) {
+                localStorage.clear();
+                sessionStorage.clear();
 
+                document.getElementById("host-input").value = "";
+                document.getElementById("user-input").value = "";
+                document.getElementById("pass-input").value = "";
+
+                closeVideoPlayer(true);
+                document.getElementById("app-layout").classList.add("hidden");
+                document.getElementById("portal-screen").classList.add("hidden");
+                document.getElementById("login-screen").classList.remove("hidden");
+            }
+        }
+
+        function handleLogin() {
             const host = cleanHostUrl(document.getElementById("host-input").value);
             const user = document.getElementById("user-input").value.trim();
             const pass = document.getElementById("pass-input").value.trim();
@@ -800,9 +821,10 @@
                 localStorage.setItem("wtv_host", host);
                 localStorage.setItem("wtv_user", user);
                 localStorage.setItem("wtv_pass", pass);
-                localStorage.setItem("wtv_web_activated", "true");
 
-                document.getElementById("activation-screen").classList.add("hidden");
+                const portalInfo = document.getElementById("portal-account-info");
+                if (portalInfo) portalInfo.innerText = `السيرفر الحالي: ${host} | المستخدم: ${user}`;
+
                 document.getElementById("login-screen").classList.add("hidden");
                 goHomePortal();
             } else {
@@ -811,44 +833,83 @@
         }
 
         function openCredentials() {
-            updateQrCodes();
             document.getElementById("host-input").value = localStorage.getItem("wtv_host") || "http://";
             document.getElementById("user-input").value = localStorage.getItem("wtv_user") || "";
             document.getElementById("pass-input").value = localStorage.getItem("wtv_pass") || "";
             document.getElementById("login-screen").classList.remove("hidden");
         }
 
-        function closeLoginScreen() {
-            document.getElementById("login-screen").classList.add("hidden");
-        }
-
         function goHomePortal() {
-            closeVideoPlayer();
+            closeVideoPlayer(true);
             document.getElementById("app-layout").classList.add("hidden");
             document.getElementById("portal-screen").classList.remove("hidden");
+            renderContinueWatchingRow();
+        }
+
+        function refreshCurrentSection() {
+            enterSection(activeTabName);
         }
 
         async function enterSection(tab) {
-            closeVideoPlayer();
+            activeTabName = tab;
+            closeVideoPlayer(true);
             document.getElementById("portal-screen").classList.add("hidden");
             document.getElementById("app-layout").classList.remove("hidden");
 
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            document.getElementById(`tab-${tab}`).classList.add('active');
+            const activeNav = document.getElementById(`tab-${tab}`);
+            if (activeNav) activeNav.classList.add('active');
 
             const host = cleanHostUrl(localStorage.getItem("wtv_host"));
             const user = (localStorage.getItem("wtv_user") || "").trim();
             const pass = (localStorage.getItem("wtv_pass") || "").trim();
-            if (!host || !user || !pass) return;
 
             const grid = document.getElementById("grid-container");
             const catsBar = document.getElementById("categories-bar");
             const drawer = document.getElementById("live-drawer");
-            grid.innerHTML = "<div style='color:var(--gray); padding:20px;'>جاري تحميل البيانات بالكامل من السيرفر...</div>";
             catsBar.innerHTML = "";
             selectedCategory = null;
             searchQuery = "";
             document.getElementById("search-input").value = "";
+
+            if (tab === 'favorites') {
+                document.getElementById("section-title").innerText = "❤️ قائمتي والمفضلة";
+                drawer.classList.add("hidden");
+                const favs = getFavorites();
+                grid.innerHTML = "";
+
+                if (!favs || favs.length === 0) {
+                    grid.innerHTML = "<div style='color:var(--gray); padding:20px;'>لا توجد عناصر مضافة لقائمتك بعد</div>";
+                    return;
+                }
+
+                favs.forEach(item => {
+                    const card = document.createElement("div");
+                    card.className = "poster-card focusable";
+                    card.tabIndex = 0;
+                    card.innerHTML = `
+                        <img src="${item.poster || 'https://via.placeholder.com/150x225?text=WTV'}" onerror="this.src='https://via.placeholder.com/150x225?text=WTV'">
+                        <div class="poster-title">${item.name}</div>
+                    `;
+                    card.onclick = () => {
+                        if (item.type === 'movie') {
+                            const movieUrl = `${host}/movie/${user}/${pass}/${item.id}.mp4`;
+                            playStream(movieUrl, 0, { id: 'movie_' + item.id, title: item.name, poster: item.poster, streamUrl: movieUrl, isLive: false }, true);
+                        } else if (item.type === 'series') {
+                            fetchSeriesEpisodes(item.id, item.name, host, user, pass);
+                        } else {
+                            const streamUrl = `${host}/live/${user}/${pass}/${item.id}.m3u8`;
+                            playStream(streamUrl, 0, { id: item.id, title: item.name, poster: item.poster, streamUrl: streamUrl, isLive: true }, true);
+                        }
+                    };
+                    grid.appendChild(card);
+                });
+                return;
+            }
+
+            if (!host || !user || !pass) { openCredentials(); return; }
+
+            grid.innerHTML = "<div style='color:var(--gray); padding:20px;'>جاري جلب المحتوى والتحميل الفوري...</div>";
 
             if (tab === 'live') {
                 document.getElementById("section-title").innerText = "البث المباشر والقنوات";
@@ -862,16 +923,16 @@
                     try { cats = await fetchXtreamApi(catUrl); } catch(e){ cats = []; }
                     streams = await fetchXtreamApi(streamUrl);
 
-                    currentCategories = Array.isArray(cats) ? cats : [];
-                    currentItems = Array.isArray(streams) ? streams : [];
+                    currentCategories = ensureArray(cats);
+                    currentItems = ensureArray(streams);
 
                     renderCategoriesBar(currentCategories, 'live');
                     filterAndRender('live', host, user, pass);
                 } catch (e) {
-                    grid.innerHTML = "<div class='error-msg'>تعذّر جلب القنوات المباشرة. تحقق من بيانات السيرفر (اسم المستخدم/كلمة المرور/الهوست)</div>";
+                    renderErrorCard(grid, "تعذّر جلب القنوات المباشرة", host, user);
                 }
             } else if (tab === 'movies') {
-                document.getElementById("section-title").innerText = "مكتبة الأفلام الشاملة";
+                document.getElementById("section-title").innerText = "مكتبة الأفلام الموصى بها";
                 drawer.classList.add("hidden");
                 try {
                     const catUrl = `${host}/player_api.php?username=${user}&password=${pass}&action=get_vod_categories`;
@@ -882,16 +943,20 @@
                     try { cats = await fetchXtreamApi(catUrl); } catch(e){ cats = []; }
                     streams = await fetchXtreamApi(streamUrl);
 
-                    currentCategories = Array.isArray(cats) ? cats : [];
-                    currentItems = Array.isArray(streams) ? streams : [];
+                    currentCategories = ensureArray(cats);
+                    currentItems = ensureArray(streams);
+
+                    if (currentCategories.length > 0) {
+                        selectedCategory = currentCategories[0].category_id;
+                    }
 
                     renderCategoriesBar(currentCategories, 'movies');
                     filterAndRender('movies', host, user, pass);
                 } catch (e) {
-                    grid.innerHTML = "<div class='error-msg'>تعذّر جلب قائمة الأفلام. تحقق من بيانات السيرفر (اسم المستخدم/كلمة المرور/الهوست)</div>";
+                    renderErrorCard(grid, "تعذّر جلب قائمة الأفلام", host, user);
                 }
             } else if (tab === 'series') {
-                document.getElementById("section-title").innerText = "مكتبة المسلسلات والبرامج الشاملة";
+                document.getElementById("section-title").innerText = "المسلسلات الموصى بها";
                 drawer.classList.add("hidden");
                 try {
                     const catUrl = `${host}/player_api.php?username=${user}&password=${pass}&action=get_series_categories`;
@@ -902,15 +967,42 @@
                     try { cats = await fetchXtreamApi(catUrl); } catch(e){ cats = []; }
                     streams = await fetchXtreamApi(streamUrl);
 
-                    currentCategories = Array.isArray(cats) ? cats : [];
-                    currentItems = Array.isArray(streams) ? streams : [];
+                    currentCategories = ensureArray(cats);
+                    currentItems = ensureArray(streams);
+
+                    if (currentCategories.length > 0) {
+                        selectedCategory = currentCategories[0].category_id;
+                    }
 
                     renderCategoriesBar(currentCategories, 'series');
                     filterAndRender('series', host, user, pass);
                 } catch (e) {
-                    grid.innerHTML = "<div class='error-msg'>تعذّر جلب قائمة المسلسلات. تحقق من بيانات السيرفر (اسم المستخدم/كلمة المرور/الهوست)</div>";
+                    renderErrorCard(grid, "تعذّر جلب قائمة المسلسلات", host, user);
                 }
             }
+        }
+
+        function renderErrorCard(container, title, host, user) {
+            container.innerHTML = `
+                <div class="card" style="margin:20px auto; max-width:540px; text-align:right;">
+                    <h3 style="color:var(--red); margin-bottom:12px;">⚠️ ${title}</h3>
+                    <p style="font-size:13px; color:var(--gray); margin-bottom:8px;">• قد تكون بيانات الحساب المحفوظة قديمة أو غير صحيحة.</p>
+
+                    <!-- حل مشكلة المتصفحات المحمولية والحظر: إرشادات صريحة لتجربة أصلية 100% -->
+                    <div style="background:#221818; border:1px solid #552222; padding:12px; border-radius:8px; margin:12px 0;">
+                        <p style="font-size:12px; color:#ff8888; font-weight:bold; margin-bottom:4px;">📱 للتجربة الفائقة والسرعة بدون أي حظر متصفحات:</p>
+                        <p style="font-size:11px; color:#ddd; margin:0;">ننصحك بتثبيت تطبيق أندرويد المباشر (APK) حيث يعمل بدون وسائط وبث مباشر بنسبة 100% ثابت.</p>
+                    </div>
+
+                    <div style="background:#111; padding:10px; border-radius:8px; margin:12px 0; font-size:12px; color:var(--gold); direction:ltr; text-align:left;">
+                        Host: ${host}<br>User: ${user}
+                    </div>
+                    <div style="display:flex; gap:10px; margin-top:14px;">
+                        <button class="btn focusable" tabindex="0" style="background:#333; flex:1;" onclick="openCredentials()">✏️ تعديل بيانات السيرفر</button>
+                        <button class="btn btn-logout focusable" tabindex="0" style="flex:1;" onclick="logoutAndClearCredentials()">🚪 تسجيل الخروج وحذف الحساب</button>
+                    </div>
+                </div>
+            `;
         }
 
         function renderCategoriesBar(categories, tab) {
@@ -919,13 +1011,16 @@
 
             const allChip = document.createElement("button");
             allChip.className = "btn focusable";
-            allChip.style.cssText = "width:auto; padding:8px 16px; font-size:12px; margin:0; background:var(--red); border-radius:20px;";
-            allChip.innerText = "الكل";
-            allChip.onclick = () => {
+            allChip.tabIndex = 0;
+            allChip.style.cssText = `width:auto; padding:8px 16px; font-size:12px; margin:0; background:${selectedCategory === null ? 'var(--red)' : '#222'}; border-radius:20px;`;
+            allChip.innerText = "أهم الأعمال";
+            allChip.onclick = (e) => {
+                e.stopPropagation();
                 selectedCategory = null;
                 const host = localStorage.getItem("wtv_host");
                 const user = localStorage.getItem("wtv_user");
                 const pass = localStorage.getItem("wtv_pass");
+                renderCategoriesBar(categories, tab);
                 filterAndRender(tab, host, user, pass);
             };
             bar.appendChild(allChip);
@@ -934,13 +1029,17 @@
                 categories.forEach(cat => {
                     const chip = document.createElement("button");
                     chip.className = "btn focusable";
-                    chip.style.cssText = "width:auto; padding:8px 16px; font-size:12px; margin:0; background:#222; border-radius:20px;";
+                    chip.tabIndex = 0;
+                    const isSel = selectedCategory == cat.category_id;
+                    chip.style.cssText = `width:auto; padding:8px 16px; font-size:12px; margin:0; background:${isSel ? 'var(--red)' : '#222'}; border-radius:20px;`;
                     chip.innerText = cat.category_name || cat.name;
-                    chip.onclick = () => {
+                    chip.onclick = (e) => {
+                        e.stopPropagation();
                         selectedCategory = cat.category_id;
                         const host = localStorage.getItem("wtv_host");
                         const user = localStorage.getItem("wtv_user");
                         const pass = localStorage.getItem("wtv_pass");
+                        renderCategoriesBar(categories, tab);
                         filterAndRender(tab, host, user, pass);
                     };
                     bar.appendChild(chip);
@@ -953,17 +1052,19 @@
             const host = localStorage.getItem("wtv_host");
             const user = localStorage.getItem("wtv_user");
             const pass = localStorage.getItem("wtv_pass");
-            const activeTab = document.querySelector('.nav-item.active').id.replace('tab-', '');
-            filterAndRender(activeTab, host, user, pass);
+            filterAndRender(activeTabName, host, user, pass);
         }
 
         function filterAndRender(tab, host, user, pass) {
             let filtered = currentItems;
             if (selectedCategory !== null) {
                 filtered = filtered.filter(it => (it.category_id || it.categoryId) == selectedCategory);
+            } else if (searchQuery === "") {
+                filtered = filtered.slice(0, 30);
             }
+
             if (searchQuery !== "") {
-                filtered = filtered.filter(it => (it.name || it.title || "").toLowerCase().includes(searchQuery));
+                filtered = currentItems.filter(it => (it.name || it.title || "").toLowerCase().includes(searchQuery));
             }
 
             if (tab === 'live') {
@@ -981,14 +1082,18 @@
             channels.forEach(ch => {
                 const item = document.createElement("div");
                 item.className = "channel-item focusable";
+                item.tabIndex = 0;
                 item.innerHTML = `
                     <span class="channel-name">${ch.name}</span>
                     <img class="channel-logo" src="${ch.stream_icon || ''}" onerror="this.style.display='none'">
                 `;
-                item.onclick = () => playStream(`${host}/live/${user}/${pass}/${ch.stream_id}.m3u8`);
+                item.onclick = (e) => {
+                    e.stopPropagation();
+                    const streamUrl = `${host}/live/${user}/${pass}/${ch.stream_id}.m3u8`;
+                    playStream(streamUrl, 0, { id: ch.stream_id, title: ch.name, poster: ch.stream_icon, streamUrl: streamUrl, isLive: true }, true);
+                };
                 list.appendChild(item);
             });
-            if (channels.length > 0) playStream(`${host}/live/${user}/${pass}/${channels[0].stream_id}.m3u8`);
         }
 
         function renderVodGrid(items, type, host, user, pass) {
@@ -996,13 +1101,14 @@
             grid.innerHTML = "";
 
             if (!items || items.length === 0) {
-                grid.innerHTML = "<div style='color:var(--gray); padding:20px;'>لا توجد عناصر متاحة في هذا القسم أو لهذا البحث</div>";
+                grid.innerHTML = "<div style='color:var(--gray); padding:20px;'>لا توجد عناصر متاحة في هذه الباقة أو لهذا البحث</div>";
                 return;
             }
 
             items.forEach(item => {
                 const card = document.createElement("div");
                 card.className = "poster-card focusable";
+                card.tabIndex = 0;
                 const posterUrl = item.stream_icon || item.cover || 'https://via.placeholder.com/150x225?text=WTV';
                 card.innerHTML = `
                     <img src="${posterUrl}" onerror="this.src='https://via.placeholder.com/150x225?text=WTV'">
@@ -1011,78 +1117,123 @@
 
                 card.onclick = () => {
                     if (type === 'movie') {
-                        const ext = item.container_extension || 'mp4';
-                        const movieUrl = `${host}/movie/${user}/${pass}/${item.stream_id}.${ext}`;
-                        playStream(movieUrl);
+                        showMovieDetailsModal(item, host, user, pass);
                     } else if (type === 'series') {
-                        fetchSeriesEpisodes(item.series_id || item.stream_id, item.name, host, user, pass);
+                        showSeriesDetailsModal(item, host, user, pass);
                     }
                 };
                 grid.appendChild(card);
             });
         }
 
-        async function fetchSeriesEpisodes(seriesId, seriesName, host, user, pass) {
+        /* ---------------- نافذة تفاصيل الفيلم الفاخرة (Movie Details Modal) ---------------- */
+        async function showMovieDetailsModal(item, host, user, pass) {
+            const ext = item.container_extension || 'mp4';
+            const movieUrl = `${host}/movie/${user}/${pass}/${item.stream_id}.${ext}`;
+            const posterUrl = item.stream_icon || item.cover || 'https://via.placeholder.com/150x225?text=WTV';
+
+            const modal = document.getElementById("details-modal");
+            const content = document.getElementById("details-content");
+
+            content.innerHTML = `
+                <div class="modal-details">
+                    <img class="modal-poster" src="${posterUrl}">
+                    <div class="modal-info">
+                        <h2 style="color:var(--gold); margin-bottom:8px;">${item.name}</h2>
+                        <p style="font-size:12px; color:var(--gray); margin-bottom:12px;">⭐ تقييم: ${item.rating || '8.5'} | 🎬 ${item.genre || 'أفلام سينمائية'}</p>
+                        <p style="font-size:13px; color:#ddd; line-height:1.6; margin-bottom:20px;">${item.plot || 'قصة الفيلم وتفاصيل العرض المشوقة على منصة WTV Smart TV.'}</p>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn focusable" tabindex="0" style="flex:1;" onclick="closeDetailsModal(); playStream('${movieUrl}', 0, {id:'movie_${item.stream_id}', title:'${item.name}', poster:'${posterUrl}', streamUrl:'${movieUrl}', isLive:false}, true)">▶️ تشغيل الفيلم</button>
+                            <button class="btn focusable" tabindex="0" style="background:#333; flex:1;" onclick="toggleFavorite({stream_id:'${item.stream_id}', name:'${item.name}', stream_icon:'${posterUrl}'}, 'movie')">❤️ مفضلة</button>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn focusable" tabindex="0" style="margin-top:20px; background:#444;" onclick="closeDetailsModal()">إغلاق</button>
+            `;
+            modal.classList.remove("hidden");
+        }
+
+        /* ---------------- نافذة تفاصيل المسلسل الفاخرة (Series Details Modal) ---------------- */
+        async function showSeriesDetailsModal(item, host, user, pass) {
+            const seriesId = item.series_id || item.stream_id;
+            const posterUrl = item.cover || item.stream_icon || 'https://via.placeholder.com/150x225?text=WTV';
+            const modal = document.getElementById("details-modal");
+            const content = document.getElementById("details-content");
+
+            content.innerHTML = "<div style='color:var(--gray); padding:30px;'>جاري تحميل معلومات وحلقات المسلسل...</div>";
+            modal.classList.remove("hidden");
+
             try {
                 const epUrl = `${host}/player_api.php?username=${user}&password=${pass}&action=get_series_info&series_id=${seriesId}`;
                 const data = await fetchXtreamApi(epUrl);
+                const info = data ? data.info : {};
                 const episodes = data ? data.episodes : null;
-                if (!episodes) {
-                    alert("لا توجد حلقات متاحة لهذا المسلسل");
-                    return;
-                }
-
-                let epModal = document.getElementById("episodes-modal");
-                if (!epModal) {
-                    epModal = document.createElement("div");
-                    epModal.id = "episodes-modal";
-                    epModal.className = "screen";
-                    document.body.appendChild(epModal);
-                }
 
                 let html = `
-                    <div class="card" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
-                        <h3 style="color:var(--gold); margin-bottom: 12px;">${seriesName}</h3>
-                        <p style="font-size: 12px; color:var(--gray); margin-bottom: 16px;">اختر الحلقة للبدء بالمشاهدة:</p>
-                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <div class="modal-details">
+                        <img class="modal-poster" src="${posterUrl}">
+                        <div class="modal-info">
+                            <h2 style="color:var(--gold); margin-bottom:8px;">${item.name}</h2>
+                            <p style="font-size:12px; color:var(--gray); margin-bottom:10px;">⭐ تقييم: ${info.rating || '8.8'} | 🍿 ${info.genre || 'مسلسلات درامية'}</p>
+                            <p style="font-size:13px; color:#ddd; line-height:1.5; margin-bottom:14px;">${info.plot || 'وصف وقصة المسلسل المشوقة متوفرة بجميع الحلقات والمواسم.'}</p>
+                            <button class="btn focusable" tabindex="0" style="background:#333; width:auto; padding:8px 16px;" onclick="toggleFavorite({series_id:'${seriesId}', name:'${item.name}', cover:'${posterUrl}'}, 'series')">❤️ أضف لقائمتي</button>
+                        </div>
+                    </div>
+                    <hr style="border-color:#333; margin:16px 0;">
+                    <h3 style="color:var(--gold); margin-bottom:12px; text-align:right;">حلقات المسلسل:</h3>
+                    <div style="display: flex; flex-direction: column; gap: 8px; max-height: 40vh; overflow-y: auto;">
                 `;
 
-                Object.keys(episodes).forEach(seasonNum => {
-                    html += `<div style="font-weight:bold; color:var(--red); text-align:right; margin-top:10px;">الموسم ${seasonNum}</div>`;
-                    episodes[seasonNum].forEach(ep => {
-                        const epExt = ep.container_extension || 'mp4';
-                        const streamEpUrl = `${host}/series/${user}/${pass}/${ep.id}.${epExt}`;
-                        html += `
-                            <button class="btn focusable" style="background:#222; text-align:right; padding:10px; font-size:13px;" onclick="closeEpModal(); playStream('${streamEpUrl}')">
-                                ▶️ الحلقة ${ep.episode_num} - ${ep.title || 'حلقة ' + ep.episode_num}
-                            </button>
-                        `;
+                if (episodes) {
+                    Object.keys(episodes).forEach(seasonNum => {
+                        html += `<div style="font-weight:bold; color:var(--red); text-align:right; margin-top:10px;">الموسم ${seasonNum}</div>`;
+                        episodes[seasonNum].forEach(ep => {
+                            const epExt = ep.container_extension || 'mp4';
+                            const streamEpUrl = `${host}/series/${user}/${pass}/${ep.id}.${epExt}`;
+                            html += `
+                                <button class="btn focusable" tabindex="0" style="background:#222; text-align:right; padding:12px; font-size:13px; margin:0;" onclick="closeDetailsModal(); playStream('${streamEpUrl}', 0, {id:'ep_${ep.id}', title:'${item.name} - حلقة ${ep.episode_num}', poster:'${posterUrl}', streamUrl:'${streamEpUrl}', isLive:false}, true)">
+                                    ▶️ الحلقة ${ep.episode_num} - ${ep.title || 'حلقة ' + ep.episode_num}
+                                </button>
+                            `;
+                        });
                     });
-                });
+                } else {
+                    html += `<p style="color:var(--gray);">لا توجد حلقات متاحة لهذا المسلسل</p>`;
+                }
 
                 html += `
-                        </div>
-                        <button class="btn focusable" style="margin-top: 20px; background:#444;" onclick="closeEpModal()">إغلاق</button>
                     </div>
+                    <button class="btn focusable" tabindex="0" style="margin-top: 16px; background:#444;" onclick="closeDetailsModal()">إغلاق</button>
                 `;
 
-                epModal.innerHTML = html;
-                epModal.classList.remove("hidden");
+                content.innerHTML = html;
             } catch (e) {
-                alert("تعذّر جلب حلقات المسلسل");
+                content.innerHTML = `
+                    <h3 style="color:var(--red);">تعذّر جلب حلقات المسلسل</h3>
+                    <button class="btn focusable" tabindex="0" style="margin-top:20px; background:#444;" onclick="closeDetailsModal()">إغلاق</button>
+                `;
             }
         }
 
-        function closeEpModal() {
-            const epModal = document.getElementById("episodes-modal");
-            if (epModal) epModal.classList.add("hidden");
+        function closeDetailsModal() {
+            document.getElementById("details-modal").classList.add("hidden");
         }
 
-        function playStream(streamUrl) {
+        /* ---------------- مشغّل الفيديو وتتبع الوقت الذكي باختيار أسرع عتاد ---------------- */
+        function playStream(streamUrl, startMs = 0, mediaInfo = null, directStart = false) {
             const video = document.getElementById("player");
             const videoContainer = document.getElementById("video-container");
+            const channelOverlay = document.getElementById("channel-title-overlay");
 
+            activePlayingMedia = mediaInfo;
             videoContainer.classList.remove("hidden");
+
+            if (mediaInfo && mediaInfo.title) {
+                channelOverlay.innerText = `${mediaInfo.isLive ? '🔴 بث مباشر:' : '🎬'} ${mediaInfo.title}`;
+                channelOverlay.classList.remove("hidden");
+            } else {
+                channelOverlay.classList.add("hidden");
+            }
 
             if (hlsPlayer) {
                 hlsPlayer.destroy();
@@ -1092,28 +1243,49 @@
             video.removeAttribute("src");
             video.load();
 
+            const onVideoLoaded = () => {
+                if (startMs > 0 && video.duration) {
+                    video.currentTime = startMs / 1000;
+                }
+                video.play().catch(e => console.log("Play caught:", e));
+            };
+
             if (Hls.isSupported() && (streamUrl.includes('.m3u8') || streamUrl.includes('/live/'))) {
                 hlsPlayer = new Hls({
                     enableWorker: true,
-                    lowLatencyMode: true
+                    lowLatencyMode: true,
+                    maxBufferLength: 8,
+                    maxMaxBufferLength: 15,
+                    startFragPrefetch: true
                 });
                 hlsPlayer.loadSource(streamUrl);
                 hlsPlayer.attachMedia(video);
-                hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => {
-                    video.play().catch(e => console.log("HLS play caught:", e));
-                });
+                hlsPlayer.on(Hls.Events.MANIFEST_PARSED, onVideoLoaded);
             } else {
                 video.src = streamUrl;
                 video.load();
-                video.play().catch(e => {
-                    console.log("Direct play caught:", e);
-                });
+                video.onloadedmetadata = onVideoLoaded;
+                video.play().catch(e => console.log("Direct play caught:", e));
             }
+
+            // حفظ متابعة المشاهدة أوتوماتيكياً كل 5 ثوانٍ للأفلام والمسلسلات فقط
+            video.ontimeupdate = () => {
+                if (activePlayingMedia && !activePlayingMedia.isLive && video.duration > 30 && video.currentTime > 5) {
+                    saveProgress(activePlayingMedia, video.currentTime * 1000, video.duration * 1000);
+                }
+            };
         }
 
-        function closeVideoPlayer() {
+        /* رسالة تأكيد تحذيرية قبل الخروج من مشغّل الفيديو */
+        function closeVideoPlayer(force = false) {
             const video = document.getElementById("player");
             const videoContainer = document.getElementById("video-container");
+
+            if (videoContainer.classList.contains("hidden")) return;
+
+            if (!force && !confirm("هل أنت تأكدت من رغبتك في الخروج من المشغّل والرجوع؟")) {
+                return;
+            }
 
             video.pause();
             if (hlsPlayer) {
@@ -1123,10 +1295,34 @@
             videoContainer.classList.add("hidden");
         }
 
+        checkSavedCredentials();
+
+        /* ---------------- التحكم بالريموت بالكامل (D-Pad Keyboard Navigation) ---------------- */
         document.addEventListener('keydown', function (e) {
-            if (e.keyCode === 10009 || e.keyCode === 461 || e.keyCode === 27) {
-                closeVideoPlayer();
-                goHomePortal();
+            const activeModal = document.getElementById("details-modal");
+            const isModalOpen = activeModal && !activeModal.classList.contains("hidden");
+
+            if (e.keyCode === 10009 || e.keyCode === 461 || e.keyCode === 27) { // Back
+                if (isModalOpen) closeDetailsModal();
+                else { closeVideoPlayer(); }
+                return;
+            }
+
+            // التنقل بأسهم الريموت (D-Pad Navigation)
+            const focusables = Array.from(document.querySelectorAll('.focusable, button, input, .nav-item, .portal-card, .poster-card, .cw-card'))
+                .filter(el => el.offsetParent !== null);
+
+            let currIndex = focusables.indexOf(document.activeElement);
+
+            if (e.key === "ArrowDown" || e.keyCode === 40) {
+                if (currIndex >= 0 && currIndex < focusables.length - 1) focusables[currIndex + 1].focus();
+                else if (focusables.length > 0) focusables[0].focus();
+            } else if (e.key === "ArrowUp" || e.keyCode === 38) {
+                if (currIndex > 0) focusables[currIndex - 1].focus();
+            } else if (e.key === "ArrowLeft" || e.keyCode === 37) {
+                if (currIndex >= 0 && currIndex < focusables.length - 1) focusables[currIndex + 1].focus();
+            } else if (e.key === "ArrowRight" || e.keyCode === 39) {
+                if (currIndex > 0) focusables[currIndex - 1].focus();
             }
         });
     </script>
