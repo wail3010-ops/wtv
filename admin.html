@@ -71,14 +71,14 @@
             font-weight: bold;
         }
 
-        input {
+        input, textarea {
             width: 100%;
             padding: 14px 16px;
             border-radius: 8px;
             border: 1px solid #444;
             background: #111;
             color: #fff;
-            font-size: 15px;
+            font-size: 14px;
             outline: none;
             direction: ltr;
         }
@@ -160,59 +160,49 @@
 
     <div class="card">
         <div class="logo">WTV Admin Panel</div>
-        <div class="subtitle">🌐 لوحة نشر المزامنة السحابية للهوستات مباشرة للعملاء</div>
+        <div class="subtitle">🌐 لوحة نشر وتعميم الهوستات السحابية المباشرة للعملاء</div>
 
         <div class="input-group">
             <label for="new-host-input">أدخل رابط الهوست الجديد للعملاء:</label>
-            <input type="text" id="new-host-input" placeholder="مثال: http://my-iptv-server.com:8080">
+            <input type="text" id="new-host-input" placeholder="مثال: http://host.com:8080">
         </div>
 
-        <button class="btn" onclick="publishNewHost()">🚀 نشر الهوست أونلاين لجميع المشتركين فوراً</button>
+        <button class="btn" onclick="publishNewHost()">🚀 نشر وتعميم الهوست السحابي أونلاين</button>
 
         <div id="status-box" class="status-msg hidden"></div>
 
         <div class="hosts-list">
             <h4 style="color: var(--gold); margin-bottom: 10px; direction: rtl; text-align: right;">📡 الهوستات المفعلة حالياً بالسحابة:</h4>
-            <div id="hosts-container">جاري جلب القائمة من السحابة...</div>
+            <div id="hosts-container">جاري جلب القائمة...</div>
+        </div>
+
+        <div style="margin-top: 20px; text-align: right;">
+            <label style="color: var(--gold);">📋 كود `remote_hosts.json` الجاهز للنسخ والتحديث المباشر بـ GitHub:</label>
+            <textarea id="json-copy-box" rows="5" readonly style="font-size: 11px; margin-top: 6px;"></textarea>
+            <button class="btn" style="background:#333; margin-top: 8px; font-size: 13px;" onclick="copyJsonCode()">📋 نسخ الكود المحدث لحافظة الجوال</button>
         </div>
     </div>
 
     <script>
-        const CLOUD_SYNC_URL = "https://api.restful-api.dev/objects?name=wtv_remote_hosts";
-
         let currentHosts = [
+            "http://annkel.com:80",
             "http://paoll1w9w.site",
             "http://ssmarco.mom:80",
             "http://spark5.online:80",
             "http://rexsa.org:8880"
         ];
 
-        async function loadCloudHosts() {
-            const container = document.getElementById("hosts-container");
-            try {
-                const res = await fetch(CLOUD_SYNC_URL);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (Array.isArray(data) && data.length > 0) {
-                        const lastItem = data[data.length - 1];
-                        if (lastItem && lastItem.data && Array.isArray(lastItem.data)) {
-                            currentHosts = lastItem.data;
-                        }
-                    }
-                }
-            } catch (e) { console.log("Cloud fetch error:", e); }
-
-            renderHostsList();
+        function showStatus(msg, isOk) {
+            const box = document.getElementById("status-box");
+            box.innerText = msg;
+            box.className = "status-msg " + (isOk ? "success" : "error");
+            box.classList.remove("hidden");
         }
 
         function renderHostsList() {
             const container = document.getElementById("hosts-container");
+            const copyBox = document.getElementById("json-copy-box");
             container.innerHTML = "";
-
-            if (!currentHosts || currentHosts.length === 0) {
-                container.innerHTML = "<div style='color:var(--gray); text-align:center;'>لا توجد هوستات مضافة حتى الآن</div>";
-                return;
-            }
 
             currentHosts.forEach((host, idx) => {
                 const item = document.createElement("div");
@@ -223,11 +213,14 @@
                 `;
                 container.appendChild(item);
             });
+
+            if (copyBox) {
+                copyBox.value = JSON.stringify(currentHosts, null, 2);
+            }
         }
 
         async function publishNewHost() {
             const input = document.getElementById("new-host-input");
-            const statusBox = document.getElementById("status-box");
             let rawHost = input.value.trim().replace(/\/+$/, "");
 
             if (!rawHost) {
@@ -240,54 +233,30 @@
             }
 
             if (!currentHosts.includes(rawHost)) {
-                currentHosts.push(rawHost);
+                currentHosts.unshift(rawHost);
             }
 
-            showStatus("جاري نشر وتعميم الهوست أونلاين لجميع المشتركين...", true);
-
-            try {
-                const res = await fetch("https://api.restful-api.dev/objects", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        name: "wtv_remote_hosts",
-                        data: currentHosts
-                    })
-                });
-
-                if (res.ok) {
-                    input.value = "";
-                    showStatus("🎉 تم نشر وتعميم الهوست لجميع المشتركين أونلاين بنجاح!", true);
-                    renderHostsList();
-                } else {
-                    showStatus("تعذّر النشر، حاول مجدداً", false);
-                }
-            } catch (e) {
-                showStatus("حدث خطأ في الاتصال، تحقق من شبكتك", false);
-            }
+            input.value = "";
+            renderHostsList();
+            showStatus("🎉 تم إضافة وتجهيز الهوست المحدث بنجاح! يمكنك الآن نسخ الكود المحدث أونلاين بضغطة زر.", true);
         }
 
-        async function deleteHost(idx) {
-            if (confirm("هل تريد حذف هذا الهوست من القائمة أونلاين؟")) {
+        function deleteHost(idx) {
+            if (confirm("هل تريد حذف هذا الهوست من القائمة؟")) {
                 currentHosts.splice(idx, 1);
                 renderHostsList();
-                showStatus("جاري حفظ التحديث بالسحابة...", true);
-
-                try {
-                    await fetch("https://api.restful-api.dev/objects", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            name: "wtv_remote_hosts",
-                            data: currentHosts
-                        })
-                    });
-                    showStatus("تم التحديث والحذف بنجاح أونلاين", true);
-                } catch(e){}
+                showStatus("تم التحديث والحذف من القائمة", true);
             }
         }
 
-        loadCloudHosts();
+        function copyJsonCode() {
+            const copyBox = document.getElementById("json-copy-box");
+            copyBox.select();
+            document.execCommand("copy");
+            alert("🎉 تم نسخ كود remote_hosts.json المحدث بنجاح لحافظة جوالك!");
+        }
+
+        renderHostsList();
     </script>
 </body>
 </html>
